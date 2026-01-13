@@ -55,6 +55,17 @@ int main(){
          break;
       }else if(strcmp(command,"echo")==0){
           printf("%s\n",buffer->input+strlen(command)+1);
+         
+      }else if(strcmp("type",command)==0){
+           if(strcmp(buffer->input+strlen(command)+1,"exit")==0){
+                printf("exit is a shell builtin\n");
+           }else if(strcmp(buffer->input+strlen(command)+1,"echo")==0){
+                printf("echo is a shell builtin\n");
+           }else if(strcmp(buffer->input+strlen(command)+1,"type")==0){
+                printf("type is a shell builtin\n");
+           }else{
+               printf("%s : not found\n",buffer->input+strlen(command)+1);
+           }
       }else{
          printf("%s: command not found\n",command);
       }
