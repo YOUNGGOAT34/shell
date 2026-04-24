@@ -74,6 +74,10 @@ void parse_commands(){
               }
               type_command(getenv("PATH"),cmd);
               
+         }else if(strcmp("pwd",command)==0){
+
+            pwd();
+
          }else{
             execute_program(command,args);
             

@@ -1,20 +1,11 @@
 
-#include <stdio.h>
-#include <string.h>
-#include <stdbool.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/wait.h>
+
 #include "parser.h"
 
 #define MAX_BUFFER_SIZE 128
 #define MAX_ARGS_SIZE 32
 
-typedef unsigned int u32;
-typedef int i32;
-typedef char i8;
-typedef unsigned char u8;
+
 
 
 
