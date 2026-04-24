@@ -1,3 +1,5 @@
+#ifndef TYPE_COMMAND_H
+#define TYPE_COMMAND_H
 
 #include <stdio.h>
 #include <string.h>
@@ -6,24 +8,13 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/wait.h>
-#include "parser.h"
-
-#define MAX_BUFFER_SIZE 128
-#define MAX_ARGS_SIZE 32
 
 typedef unsigned int u32;
 typedef int i32;
 typedef char i8;
 typedef unsigned char u8;
 
+void type_command(i8 * path_env,i8 *cmd);
 
 
-
-
-
-int main(){
-  
-   parse_commands();   
-
-   return 0;
-}
+#endif
