@@ -12,6 +12,7 @@ void pwd(){
    }
 
    printf("%s\n",current_working_directory);
+   free(current_working_directory);
 
 
 

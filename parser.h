@@ -10,6 +10,7 @@
 #include "type_command.h"
 #include "execute.h"
 #include "pwd.h"
+#include "cd.h"
 
 
 

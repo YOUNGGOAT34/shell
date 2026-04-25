@@ -3,6 +3,8 @@
 
 void parse_commands(){
 
+      setbuf(stdout,NULL);
+
 
       while(true){
 
@@ -15,10 +17,18 @@ void parse_commands(){
          buffer->input=malloc(MAX_BUFFER_SIZE);
          buffer->size=0;
    
-   
-         setbuf(stdout,NULL);
-   
-         printf("$ ");
+         
+      
+         i8 *cwd=getcwd(NULL,0);
+         i8 *home=getenv("HOME");
+
+         if(cwd==NULL){
+            printf("$ ");
+         } else if(cwd && home && strstr(cwd,home)==cwd){
+             printf("~%s$ ",cwd+strlen(home));
+         } else{
+               printf("%s$ ",cwd);
+         }
        
          fgets(buffer->input,MAX_BUFFER_SIZE,stdin);
    
@@ -55,6 +65,8 @@ void parse_commands(){
    
    
          if(strcmp(command,"exit")==0){
+            free(buffer->input);
+            free(buffer);
             break;
          }else if(strcmp(command,"echo")==0){
              
@@ -70,6 +82,8 @@ void parse_commands(){
               i8 *cmd=args[1];
               if(cmd==NULL){
                  fprintf(stderr,"type: missing argument\n");
+                 free(buffer->input);
+                 free(buffer);
                  continue;
               }
               type_command(getenv("PATH"),cmd);
@@ -78,7 +92,11 @@ void parse_commands(){
 
             pwd();
 
-         }else{
+         }else if(strcmp("cd",command)==0){
+                 change_directory(args[1]);
+         }
+         
+         else{
             execute_program(command,args);
             
          }
