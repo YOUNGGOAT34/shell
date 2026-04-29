@@ -1,6 +1,54 @@
 
 #include "parser.h"
 
+void parse_arguments(i8 *input,i8 *args[]){
+
+  
+         i8 *current_arg=malloc(1024);
+         int i=0;//keep track of args index
+         int j=0;//keep track of current arg index
+
+         bool in_quotes=false;
+
+         //parse the input
+
+         for (int k=0;input[k]!='\0';k++){
+            i8 c=input[k];
+
+            if(c=='\''){
+                in_quotes=!in_quotes;
+                continue;
+            }
+
+            if(!in_quotes && c==' '){
+                if(j>0){
+
+                   current_arg[j]='\0';
+                   args[i++]=strdup(current_arg);
+                   j=0;
+                }
+            }else{
+
+               current_arg[j++]=c;
+
+            }
+  
+         }
+
+         if(j>0){
+             current_arg[j]='\0';
+             args[i++]=strdup(current_arg);
+         }
+
+         args[i]=NULL;
+
+         free(current_arg);
+
+
+}
+
+
+
 void parse_commands(){
 
       setbuf(stdout,NULL);
@@ -39,22 +87,11 @@ void parse_commands(){
                 buffer->input[buffer->size-1]='\0';
          }
    
-   
-   
          i8 *args[MAX_ARGS_SIZE];
-         int i=0;
    
-         i8 *token=strtok(buffer->input," ");
-   
-         while(token!=NULL){
-               args[i++]=token;
-               token=strtok(NULL," ");
-         }
-   
-   
-         args[i]=NULL;
-   
-   
+         parse_arguments(buffer->input,args);
+       
+
          i8 *command=args[0];
          
          if(command==NULL){
