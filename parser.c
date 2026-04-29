@@ -8,19 +8,25 @@ void parse_arguments(i8 *input,i8 *args[]){
          int i=0;//keep track of args index
          int j=0;//keep track of current arg index
 
-         bool in_quotes=false;
+         bool in_single_quotes=false;
+         bool in_double_qoutes=false;
 
          //parse the input
 
          for (int k=0;input[k]!='\0';k++){
             i8 c=input[k];
 
-            if(c=='\''){
-                in_quotes=!in_quotes;
+            if(c=='\'' && !in_double_qoutes){
+                in_single_quotes=!in_single_quotes;
                 continue;
             }
 
-            if(!in_quotes && c==' '){
+            if(c=='\"' && !in_single_quotes){
+                in_double_qoutes=!in_double_qoutes;
+                continue;
+            }
+
+            if(!in_single_quotes && !in_double_qoutes && c==' '){
                 if(j>0){
 
                    current_arg[j]='\0';
