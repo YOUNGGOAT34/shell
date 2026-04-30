@@ -26,6 +26,8 @@ void parse_arguments(i8 *input,i8 *args[]){
                 continue;
             }
 
+            //backslashes are special outside quotes and inside double quotes, but inside single quotes they are just literal characters
+
             if(c=='\\' && !in_single_quotes){
                 k++;
 
