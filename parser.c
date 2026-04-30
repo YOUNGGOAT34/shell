@@ -26,6 +26,17 @@ void parse_arguments(i8 *input,i8 *args[]){
                 continue;
             }
 
+            if(c=='\\' && !in_single_quotes){
+                k++;
+
+                if(input[k]!='\0'){
+                    current_arg[j++]=input[k];
+                }
+
+                continue;
+                  
+            }
+
             if(!in_single_quotes && !in_double_qoutes && c==' '){
                 if(j>0){
 
