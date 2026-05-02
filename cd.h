@@ -2,6 +2,8 @@
 #define CD_H
 #include <stdio.h>
 #include <unistd.h>
+#include<errno.h>
+#include <string.h>
 
 typedef unsigned int u32;
 typedef int i32;

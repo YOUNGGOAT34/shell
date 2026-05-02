@@ -1,7 +1,7 @@
 #include "execute.h"
 
 
-void execute_program(i8 *command,i8 *args[]){
+void execute_program(i8 *command,i8 *args[],i8 *redirect_file){
 
 
    //if the command contains / the shell shouldn't search it in PATH
@@ -18,6 +18,14 @@ void execute_program(i8 *command,i8 *args[]){
          }
    
           if(pid==0){
+               
+              if(redirect_file!=NULL){
+               i32 fd=open(redirect_file,O_WRONLY | O_CREAT | O_TRUNC,0644);
+
+                dup2(fd,STDOUT_FILENO);
+                close(fd);
+              }
+                
                
                execv(command,args);
                perror(command);
@@ -61,9 +69,16 @@ void execute_program(i8 *command,i8 *args[]){
                }
    
                if(pid==0){ 
-                  execv(full_path,args);
-                  perror(command);
-                  exit(1);
+
+                     if(redirect_file!=NULL){
+                     i32 fd=open(redirect_file,O_WRONLY | O_CREAT | O_TRUNC,0644);
+
+                     dup2(fd,STDOUT_FILENO);
+                     close(fd);
+                  }
+                        execv(full_path,args);
+                        perror(command);
+                        exit(1);
                }else{
                      wait(NULL);
                }

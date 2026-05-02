@@ -1,7 +1,7 @@
 
 #include "parser.h"
 
-void parse_arguments(i8 *input,i8 *args[]){
+void parse_arguments(i8 *input,i8 *args[],bool *redirect_flag,i8 **redirect_file){
 
   
          i8 *current_arg=malloc(1024);
@@ -15,6 +15,39 @@ void parse_arguments(i8 *input,i8 *args[]){
 
          for (int k=0;input[k]!='\0';k++){
             i8 c=input[k];
+
+             if(c=='>' || (c>='0' && c<='9' && input[k+1]=='>')){
+                 *redirect_flag=true;
+
+                 if(j>0){
+                     current_arg[j]='\0';
+                     args[i++]=strdup(current_arg);
+                     j=0;
+                 }
+
+                 if(c>='0' && c<='9'){
+                   k++;
+                 }
+
+                 k++;
+
+                 while(input[k]==' ') k++;
+
+                 i8 file[1024];
+                 i32 f=0;
+
+                 while(input[k]!='\0' && input[k]!=' '){
+                     file[f++]=input[k++];
+
+                 }
+
+                 file[f]='\0';
+                 *redirect_file=strdup(file);
+
+                 break;
+               
+             }
+
 
             if(c=='\'' && !in_double_qoutes){
                 in_single_quotes=!in_single_quotes;
@@ -63,6 +96,8 @@ void parse_arguments(i8 *input,i8 *args[]){
 
          free(current_arg);
 
+         return;
+
 
 }
 
@@ -89,6 +124,8 @@ void parse_commands(){
          i8 *cwd=getcwd(NULL,0);
          i8 *home=getenv("HOME");
 
+         // printf("$ ");
+
          if(cwd==NULL){
             printf("$ ");
          } else if(cwd && home && strstr(cwd,home)==cwd){
@@ -107,9 +144,12 @@ void parse_commands(){
          }
    
          i8 *args[MAX_ARGS_SIZE];
+         bool redirect_flag=false;
+         i8 *redirect_file=NULL;
    
-         parse_arguments(buffer->input,args);
-       
+         parse_arguments(buffer->input,args,&redirect_flag,&redirect_file);
+
+      
 
          i8 *command=args[0];
          
@@ -124,14 +164,9 @@ void parse_commands(){
             free(buffer->input);
             free(buffer);
             break;
-         }else if(strcmp(command,"echo")==0){
-             
-             for(int j=1;args[j]!=NULL;j++){
-                printf("%s ",args[j]);
-             }
-   
-             printf("\n");
-            
+         
+
+         
          }else if(strcmp("type",command)==0){
               
            
@@ -153,12 +188,13 @@ void parse_commands(){
          }
          
          else{
-            execute_program(command,args);
+            execute_program(command,args,redirect_file);
             
          }
       
          free(buffer->input);
          free(buffer);
+         free(redirect_file);
       }
     
 }
