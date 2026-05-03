@@ -6,11 +6,9 @@
 #include <errno.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include "utils.h"
 
-typedef unsigned int u32;
-typedef int i32;
-typedef char i8;
-typedef unsigned char u8;
+
 
 void pwd();
 

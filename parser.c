@@ -1,7 +1,7 @@
 
 #include "parser.h"
 
-void parse_arguments(i8 *input,i8 *args[],bool *redirect_flag,i8 **redirect_file){
+void parse_arguments(i8 *input,i8 *args[],Redirect *redirect){
 
   
          i8 *current_arg=malloc(1024);
@@ -17,7 +17,7 @@ void parse_arguments(i8 *input,i8 *args[],bool *redirect_flag,i8 **redirect_file
             i8 c=input[k];
 
              if(c=='>' || (c>='0' && c<='9' && input[k+1]=='>')){
-                 *redirect_flag=true;
+                 redirect->redirect_flag=true;
 
                  if(j>0){
                      current_arg[j]='\0';
@@ -42,7 +42,7 @@ void parse_arguments(i8 *input,i8 *args[],bool *redirect_flag,i8 **redirect_file
                  }
 
                  file[f]='\0';
-                 *redirect_file=strdup(file);
+                 redirect->stdout_file=strdup(file);
 
                  break;
                
@@ -144,10 +144,15 @@ void parse_commands(){
          }
    
          i8 *args[MAX_ARGS_SIZE];
-         bool redirect_flag=false;
-         i8 *redirect_file=NULL;
+         
+         Redirect *redirect=malloc(sizeof(Redirect));
+         redirect->stderr_file=NULL;
+         redirect->stdout_file=NULL;
+         redirect->redirect_flag=false;
+
    
-         parse_arguments(buffer->input,args,&redirect_flag,&redirect_file);
+   
+         parse_arguments(buffer->input,args,redirect);
 
       
 
@@ -188,13 +193,25 @@ void parse_commands(){
          }
          
          else{
-            execute_program(command,args,redirect_file);
+            execute_program(command,args,redirect);
             
          }
+
+
+         if(redirect->stderr_file){
+             free(redirect->stderr_file);
+         }
+
+         if(redirect->stdout_file){
+             free(redirect->stdout_file);
+         }
+
+
+         free(redirect);
       
          free(buffer->input);
          free(buffer);
-         free(redirect_file);
+         
       }
     
 }

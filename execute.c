@@ -1,9 +1,9 @@
 #include "execute.h"
 
 
-void execute_program(i8 *command,i8 *args[],i8 *redirect_file){
+void execute_program(i8 *command,i8 *args[],Redirect *redirect){
 
-
+    
    //if the command contains / the shell shouldn't search it in PATH
 
    if(strchr(command,'/')){
@@ -19,8 +19,8 @@ void execute_program(i8 *command,i8 *args[],i8 *redirect_file){
    
           if(pid==0){
                
-              if(redirect_file!=NULL){
-               i32 fd=open(redirect_file,O_WRONLY | O_CREAT | O_TRUNC,0644);
+              if(redirect->stdout_file!=NULL){
+               i32 fd=open(redirect->stdout_file,O_WRONLY | O_CREAT | O_TRUNC,0644);
 
                 dup2(fd,STDOUT_FILENO);
                 close(fd);
@@ -70,8 +70,8 @@ void execute_program(i8 *command,i8 *args[],i8 *redirect_file){
    
                if(pid==0){ 
 
-                     if(redirect_file!=NULL){
-                     i32 fd=open(redirect_file,O_WRONLY | O_CREAT | O_TRUNC,0644);
+                     if(redirect->stdout_file!=NULL){
+                     i32 fd=open(redirect->stdout_file,O_WRONLY | O_CREAT | O_TRUNC,0644);
 
                      dup2(fd,STDOUT_FILENO);
                      close(fd);

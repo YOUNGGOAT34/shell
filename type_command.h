@@ -8,11 +8,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include "utils.h"
 
-typedef unsigned int u32;
-typedef int i32;
-typedef char i8;
-typedef unsigned char u8;
 
 void type_command(i8 * path_env,i8 *cmd);
 

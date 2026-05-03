@@ -11,13 +11,12 @@
 #include<sys/stat.h>
 #include<sys/types.h>
 #include<fcntl.h>
+#include "utils.h"
 
 
-typedef unsigned int u32;
-typedef int i32;
-typedef char i8;
-typedef unsigned char u8;
 
-void execute_program(i8 *command,i8 *args[],i8 *redirect_file);
+
+
+void execute_program(i8 *command,i8 *args[],Redirect *redirect);
 
 #endif
