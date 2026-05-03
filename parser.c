@@ -25,7 +25,10 @@ void parse_arguments(i8 *input,i8 *args[],Redirect *redirect){
                      j=0;
                  }
 
+                 i32 fd=1;
+
                  if(c>='0' && c<='9'){
+                   fd=c-'0';
                    k++;
                  }
 
@@ -42,7 +45,13 @@ void parse_arguments(i8 *input,i8 *args[],Redirect *redirect){
                  }
 
                  file[f]='\0';
-                 redirect->stdout_file=strdup(file);
+                 if(fd==1){
+                      redirect->stdout_file=strdup(file);
+                 }else if(fd==2){
+                     redirect->stderr_file=strdup(file);
+                 }
+
+                
 
                  break;
                

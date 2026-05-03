@@ -20,10 +20,26 @@ void execute_program(i8 *command,i8 *args[],Redirect *redirect){
           if(pid==0){
                
               if(redirect->stdout_file!=NULL){
-               i32 fd=open(redirect->stdout_file,O_WRONLY | O_CREAT | O_TRUNC,0644);
+                        i32 fd=open(redirect->stdout_file,O_WRONLY | O_CREAT | O_TRUNC,0644);
 
-                dup2(fd,STDOUT_FILENO);
-                close(fd);
+                        if(fd<0){
+                              perror("open");
+                              exit(1);
+                        }
+
+                        dup2(fd,STDOUT_FILENO);
+                        close(fd);
+              }
+
+              if(redirect->stderr_file!=NULL){
+                        i32 fd=open(redirect->stderr_file,O_WRONLY | O_CREAT | O_TRUNC,0644);
+                        if(fd<0){
+                              perror("open");
+                              exit(1);
+                        }
+
+                        dup2(fd,STDERR_FILENO);
+                        close(fd);
               }
                 
                
@@ -71,14 +87,33 @@ void execute_program(i8 *command,i8 *args[],Redirect *redirect){
                if(pid==0){ 
 
                      if(redirect->stdout_file!=NULL){
-                     i32 fd=open(redirect->stdout_file,O_WRONLY | O_CREAT | O_TRUNC,0644);
+                              i32 fd=open(redirect->stdout_file,O_WRONLY | O_CREAT | O_TRUNC,0644);
 
-                     dup2(fd,STDOUT_FILENO);
-                     close(fd);
-                  }
-                        execv(full_path,args);
-                        perror(command);
-                        exit(1);
+                              if(fd<0){
+                                    perror("open");
+                                    exit(1);
+                              }
+
+                              dup2(fd,STDOUT_FILENO);
+                              close(fd);
+                     }
+                     
+                     if(redirect->stderr_file!=NULL){
+                            
+                              i32 fd=open(redirect->stderr_file,O_WRONLY | O_CREAT | O_TRUNC,0644);
+
+                              if(fd<0){
+                                    perror("open");
+                                    exit(1);
+                              }
+
+                              dup2(fd,STDERR_FILENO);
+                              close(fd);
+                       }
+
+                  execv(full_path,args);
+                  perror(command);
+                  exit(1);
                }else{
                      wait(NULL);
                }
