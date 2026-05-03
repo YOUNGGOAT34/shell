@@ -16,10 +16,11 @@ typedef struct{
 
 }InputBuffer;
 
-typedef struct{
+typedef struct {
     i8* stdout_file;
     i8 *stderr_file;
     bool redirect_flag;
+    bool append;
 
 }Redirect;
 

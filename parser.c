@@ -16,7 +16,12 @@ void parse_arguments(i8 *input,i8 *args[],Redirect *redirect){
          for (int k=0;input[k]!='\0';k++){
             i8 c=input[k];
 
+
+             
+
              if(c=='>' || (c>='0' && c<='9' && input[k+1]=='>')){
+
+                 
                  redirect->redirect_flag=true;
 
                  if(j>0){
@@ -26,6 +31,13 @@ void parse_arguments(i8 *input,i8 *args[],Redirect *redirect){
                  }
 
                  i32 fd=1;
+
+                 if((c=='>' && input[k+1]=='>') || (input[k+1]=='>' && input[k+2]=='>')){
+
+                    redirect->append=true;
+                    k++;
+
+                 }
 
                  if(c>='0' && c<='9'){
                    fd=c-'0';
@@ -133,7 +145,7 @@ void parse_commands(){
          i8 *cwd=getcwd(NULL,0);
          i8 *home=getenv("HOME");
 
-         // printf("$ ");
+        //  printf("$ ");
 
          if(cwd==NULL){
             printf("$ ");
@@ -158,6 +170,7 @@ void parse_commands(){
          redirect->stderr_file=NULL;
          redirect->stdout_file=NULL;
          redirect->redirect_flag=false;
+         redirect->append=false;
 
    
    

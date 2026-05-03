@@ -20,15 +20,31 @@ void execute_program(i8 *command,i8 *args[],Redirect *redirect){
           if(pid==0){
                
               if(redirect->stdout_file!=NULL){
-                        i32 fd=open(redirect->stdout_file,O_WRONLY | O_CREAT | O_TRUNC,0644);
+                        if(redirect->append){
 
-                        if(fd<0){
-                              perror("open");
-                              exit(1);
+                              i32 fd=open(redirect->stdout_file,O_WRONLY | O_CREAT | O_APPEND,0644);
+                              if(fd<0){
+                                     perror("open");
+                                     exit(1);
+                              }
+
+                              dup2(fd,STDOUT_FILENO);
+                              close(fd);
+                              
+
+                        }else{
+                            
+                              i32 fd=open(redirect->stdout_file,O_WRONLY | O_CREAT | O_TRUNC,0644);
+
+                              if(fd<0){
+                                    perror("open");
+                                    exit(1);
+                              }
+
+                              dup2(fd,STDOUT_FILENO);
+                              close(fd);
                         }
 
-                        dup2(fd,STDOUT_FILENO);
-                        close(fd);
               }
 
               if(redirect->stderr_file!=NULL){
@@ -87,15 +103,32 @@ void execute_program(i8 *command,i8 *args[],Redirect *redirect){
                if(pid==0){ 
 
                      if(redirect->stdout_file!=NULL){
-                              i32 fd=open(redirect->stdout_file,O_WRONLY | O_CREAT | O_TRUNC,0644);
 
-                              if(fd<0){
-                                    perror("open");
-                                    exit(1);
+                              if(redirect->append){
+
+                                    i32 fd=open(redirect->stdout_file,O_WRONLY | O_CREAT | O_APPEND,0644);
+      
+                                    if(fd<0){
+                                          perror("open");
+                                          exit(1);
+                                    }
+
+                                    dup2(fd,STDOUT_FILENO);
+                                    close(fd);
+
+
+                              }else{
+
+                                    i32 fd=open(redirect->stdout_file,O_WRONLY | O_CREAT | O_TRUNC,0644);
+      
+                                    if(fd<0){
+                                          perror("open");
+                                          exit(1);
+                                    }
+      
+                                    dup2(fd,STDOUT_FILENO);
+                                    close(fd);
                               }
-
-                              dup2(fd,STDOUT_FILENO);
-                              close(fd);
                      }
                      
                      if(redirect->stderr_file!=NULL){
