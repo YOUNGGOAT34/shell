@@ -1,5 +1,46 @@
 
 #include "parser.h"
+#include <termios.h>
+
+
+
+int starts_with(i8 *word,i8* cmd){
+     return strncmp(cmd,word,strlen(word))==0;
+}
+
+int autocomplete(i8 *buffer){
+      if(starts_with(buffer,"echo")){
+         strcpy(buffer,"echo ");
+         return 1;
+      }
+
+      if(starts_with(buffer,"exit")){
+        strcpy(buffer,"exit ");
+        return 1;
+      }
+
+      return 0;
+}
+
+
+void enable_raw_mode(struct termios *original_termios){
+
+    struct termios raw;
+
+
+    tcgetattr(STDIN_FILENO,original_termios);
+    raw=*original_termios;
+
+    raw.c_lflag&=~(ICANON | ECHO);
+
+    tcsetattr(STDIN_FILENO,TCSAFLUSH,&raw);
+
+}
+
+void disable_raw_mode(struct termios *original_termios){
+    tcsetattr(STDIN_FILENO,TCSAFLUSH,original_termios);
+
+}
 
 void parse_arguments(i8 *input,i8 *args[],Redirect *redirect){
 
@@ -128,6 +169,10 @@ void parse_commands(){
 
       setbuf(stdout,NULL);
 
+      struct termios original_termios;
+
+      
+
 
       while(true){
 
@@ -154,8 +199,49 @@ void parse_commands(){
          } else{
                printf("%s$ ",cwd);
          }
+
+
+        
+        
+
+        i32 len=0;
+        buffer->input[0]='\0';
+        enable_raw_mode(&original_termios);
+        while(true){
+             i8 c;
+
+             read(STDIN_FILENO,&c,1);
+
+             if(c=='\n'){
+                 printf("\n");
+                 break;
+             }else if(c=='\t'){
+ 
+                    if(len>0 && autocomplete(buffer->input)){
+
+                        len=(strlen(buffer->input));
+                        
+                    
+                    }
+                 
+             }else{
+                   if(len<MAX_BUFFER_SIZE-1){
+
+                       buffer->input[len++]=c;
+                       buffer->input[len]='\0';
+                   }
+                   
+             }
+
+
+                printf("\r\033[K$ %s",buffer->input);
+                fflush(stdout);
+
+        }
+
+        disable_raw_mode(&original_termios);
        
-         fgets(buffer->input,MAX_BUFFER_SIZE,stdin);
+        //  fgets(buffer->input,MAX_BUFFER_SIZE,stdin);
    
    
          buffer->size=strlen(buffer->input);
