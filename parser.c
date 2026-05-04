@@ -8,15 +8,44 @@ int starts_with(i8 *word,i8* cmd){
      return strncmp(cmd,word,strlen(word))==0;
 }
 
+
 int autocomplete(i8 *buffer){
       if(starts_with(buffer,"echo")){
          strcpy(buffer,"echo ");
          return 1;
-      }
-
-      if(starts_with(buffer,"exit")){
+      }else if(starts_with(buffer,"exit")){
         strcpy(buffer,"exit ");
         return 1;
+      }else{
+           
+          i8 path_copy[1024];
+          i8 *path_env=getenv("PATH");
+          if(!path_env){
+              fprintf(stderr,"Path is not set: %s\n",strerror(errno));
+              exit(1);
+          }
+
+          strncpy(path_copy,path_env,sizeof(path_copy)-1);
+          path_copy[sizeof(path_copy)-1]='\0';
+
+          i8 *dir=strtok(path_copy,":");
+
+          while(dir!=NULL){
+              i8 full_path[255];
+
+              snprintf(full_path,sizeof(full_path)-1,"%s/%s",dir,buffer);
+
+              if(access(full_path,X_OK)==0){
+                   strcpy(buffer,full_path);
+                   return 1;
+              }
+
+              dir=strtok(NULL,":");
+
+
+          }
+
+
       }
 
       return 0;
@@ -222,6 +251,8 @@ void parse_commands(){
                         len=(strlen(buffer->input));
                         
                     
+                    }else{
+                         printf("%c",7);
                     }
                  
              }else{
@@ -233,6 +264,7 @@ void parse_commands(){
                    
              }
 
+      
 
                 printf("\r\033[K$ %s",buffer->input);
                 fflush(stdout);
