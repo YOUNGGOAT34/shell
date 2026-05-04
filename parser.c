@@ -1,13 +1,13 @@
 
 #include "parser.h"
 #include <termios.h>
+#include <dirent.h>
 
 
 
 int starts_with(i8 *word,i8* cmd){
      return strncmp(cmd,word,strlen(word))==0;
 }
-
 
 int autocomplete(i8 *buffer){
       if(starts_with(buffer,"echo")){
@@ -31,13 +31,23 @@ int autocomplete(i8 *buffer){
           i8 *dir=strtok(path_copy,":");
 
           while(dir!=NULL){
-              i8 full_path[255];
+              
+              DIR *d=opendir(dir);
+              
+              if(d){
 
-              snprintf(full_path,sizeof(full_path)-1,"%s/%s",dir,buffer);
+                 struct dirent *entry;
+                  
+                while((entry=readdir(d))!=NULL){
 
-              if(access(full_path,X_OK)==0){
-                   strcpy(buffer,full_path);
-                   return 1;
+                     if(starts_with(buffer,entry->d_name)){
+                         strcpy(buffer,entry->d_name);
+                         strcat(buffer," ");
+                         return 1;
+                     }
+                        
+                }
+
               }
 
               dir=strtok(NULL,":");
@@ -219,15 +229,15 @@ void parse_commands(){
          i8 *cwd=getcwd(NULL,0);
          i8 *home=getenv("HOME");
 
-        //  printf("$ ");
+         printf("$ ");
 
-         if(cwd==NULL){
-            printf("$ ");
-         } else if(cwd && home && strstr(cwd,home)==cwd){
-             printf("~%s$ ",cwd+strlen(home));
-         } else{
-               printf("%s$ ",cwd);
-         }
+        //  if(cwd==NULL){
+        //     printf("$ ");
+        //  } else if(cwd && home && strstr(cwd,home)==cwd){
+        //      printf("~%s$ ",cwd+strlen(home));
+        //  } else{
+        //        printf("%s$ ",cwd);
+        //  }
 
 
         
@@ -264,7 +274,6 @@ void parse_commands(){
                    
              }
 
-      
 
                 printf("\r\033[K$ %s",buffer->input);
                 fflush(stdout);
