@@ -5,16 +5,26 @@
 
 
 
+int comparator(const void *a,const void *b){
+     return strcmp(*(i8 **)a,*(i8 **)b);
+}
+
+
 int starts_with(i8 *word,i8* cmd){
      return strncmp(cmd,word,strlen(word))==0;
 }
 
-int autocomplete(i8 *buffer){
+int autocomplete(i8 *buffer,i8 *matches[]){
+
+      i32 matches_count=0;
+    
       if(starts_with(buffer,"echo")){
-         strcpy(buffer,"echo ");
+         matches[0]=strdup("echo");
+        //  strcpy(buffer,"echo ");
          return 1;
       }else if(starts_with(buffer,"exit")){
-        strcpy(buffer,"exit ");
+         matches[0]=strdup("exit");
+        // strcpy(buffer,"exit ");
         return 1;
       }else{
            
@@ -30,35 +40,63 @@ int autocomplete(i8 *buffer){
 
           i8 *dir=strtok(path_copy,":");
 
+          
+       
+
           while(dir!=NULL){
-              
+            
+
+
               DIR *d=opendir(dir);
               
               if(d){
 
+
                  struct dirent *entry;
+
                   
                 while((entry=readdir(d))!=NULL){
 
-                     if(starts_with(buffer,entry->d_name)){
-                         strcpy(buffer,entry->d_name);
-                         strcat(buffer," ");
-                         return 1;
+                     i8 full_path[1024];
+                     snprintf(full_path,sizeof(full_path),"%s/%s",dir,entry->d_name);
+
+                     if(starts_with(buffer,entry->d_name) && access(full_path,X_OK)==0){
+                         matches[matches_count++]=strdup(entry->d_name);
+                        //  strcpy(buffer,entry->d_name);
+                        //  strcat(buffer," ");
+                        //  closedir(d);
+                        //  return 1;
                      }
                         
                 }
 
               }
 
+             closedir(d);
+
               dir=strtok(NULL,":");
 
 
           }
 
+          if(matches_count>0){
+
+              if(matches_count==1){
+                strcpy(buffer,matches[0]);
+                strcat(buffer," ");
+                
+              }
+
+           
+          }
+
+
+          
+
 
       }
 
-      return 0;
+      return matches_count;
 }
 
 
@@ -210,10 +248,17 @@ void parse_commands(){
 
       struct termios original_termios;
 
+
+      static i32 tab_count=0;
+      i8 last_buffer[MAX_BUFFER_SIZE];
+      bool printed_something=false;
+
       
 
 
       while(true){
+
+         printed_something=false;
 
          InputBuffer *buffer=malloc(sizeof(InputBuffer));
          if(!buffer){
@@ -223,6 +268,9 @@ void parse_commands(){
    
          buffer->input=malloc(MAX_BUFFER_SIZE);
          buffer->size=0;
+
+
+
    
          
       
@@ -249,21 +297,71 @@ void parse_commands(){
         while(true){
              i8 c;
 
+
+             
+
              read(STDIN_FILENO,&c,1);
 
              if(c=='\n'){
                  printf("\n");
                  break;
              }else if(c=='\t'){
- 
-                    if(len>0 && autocomplete(buffer->input)){
 
-                        len=(strlen(buffer->input));
-                        
-                    
-                    }else{
-                         printf("%c",7);
-                    }
+
+
+            if(strcmp(buffer->input,last_buffer)!=0){
+                      tab_count=0;
+                     strcpy(last_buffer,buffer->input);
+             }
+
+
+             tab_count++;
+            
+             i8 *matches[255];
+
+             i32 matches_count=autocomplete(buffer->input,matches);
+
+             if(matches_count==0){
+                  printf("\a");
+             }else if(matches_count==1){
+                   if(matches[0]!=NULL){
+
+                       strcpy(buffer->input,matches[0]);
+                       strcat(buffer->input," ");
+                      
+                   }
+
+                  len=strlen(buffer->input);
+                  tab_count=0;
+             }else{
+                  if(tab_count==1){
+                       printf("\a");
+                  }else{
+                      printf("\n");
+
+                      qsort(matches,matches_count,sizeof(i8 *),comparator);
+
+                      for(i32 i=0;i<matches_count;i++){
+                            
+                            printf("%s", matches[i]);
+                            if(i!=matches_count-1){
+                                printf("  ");
+                            }
+                            free(matches[i]);
+                      }
+
+                      printed_something=true;
+
+                      printf("\n");
+
+                   
+                      tab_count=0;
+                  }
+             }
+
+
+                     
+                 
                  
              }else{
                    if(len<MAX_BUFFER_SIZE-1){
@@ -273,10 +371,13 @@ void parse_commands(){
                    }
                    
              }
+  
+              
 
+                    printf("\r\033[K$ %s",buffer->input);
+                    fflush(stdout);
+                
 
-                printf("\r\033[K$ %s",buffer->input);
-                fflush(stdout);
 
         }
 
