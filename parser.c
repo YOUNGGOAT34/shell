@@ -5,6 +5,32 @@
 
 
 
+i32 longest_common_prefix(i8 *matches[],i32 matches_count){
+
+    i32 count=0;
+
+    for(int i=0;matches[0][i]!='\0';i++){
+          
+        i8 current_char=matches[0][i];
+
+        for(int j=1;j<matches_count;j++){
+              if(matches[j][i]=='\0' || matches[j][i]!=current_char){
+                 
+                 return count;
+              }
+
+             
+        }
+
+         count++;
+
+       
+    }
+
+    return count;
+      
+}
+
 int comparator(const void *a,const void *b){
      return strcmp(*(i8 **)a,*(i8 **)b);
 }
@@ -334,29 +360,41 @@ void parse_commands(){
                   len=strlen(buffer->input);
                   tab_count=0;
              }else{
-                  if(tab_count==1){
-                       printf("\a");
-                  }else{
-                      printf("\n");
 
-                      qsort(matches,matches_count,sizeof(i8 *),comparator);
+                
+                
+                    
+                      i32 lcp_length=longest_common_prefix(matches,matches_count);
 
-                      for(i32 i=0;i<matches_count;i++){
+                      if(lcp_length>strlen(buffer->input)){
+                         
+                          strncpy(buffer->input,matches[0],lcp_length);
+                          buffer->input[lcp_length]='\0';
+                          len=strlen(buffer->input);
+                          tab_count=0;
+                      }else{
+                          if(tab_count==1){
+                             printf("\a");
+                          }else{
+                             qsort(matches,matches_count,sizeof(i8 *),comparator);
+                             printf("\n");
+
+                             for(i32 i=0;i<matches_count;i++){
                             
-                            printf("%s", matches[i]);
-                            if(i!=matches_count-1){
-                                printf("  ");
-                            }
-                            free(matches[i]);
+                                    printf("%s", matches[i]);
+                                    if(i!=matches_count-1){
+                                        printf("  ");
+                                    }
+                                    free(matches[i]);
+                              }
+
+                                printed_something=true;
+
+                                printf("\n");
+                          }
                       }
-
-                      printed_something=true;
-
-                      printf("\n");
-
-                   
-                      tab_count=0;
-                  }
+   
+                  
              }
 
 
