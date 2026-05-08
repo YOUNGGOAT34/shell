@@ -40,10 +40,10 @@ int starts_with(i8 *word,i8* cmd){
      return strncmp(cmd,word,strlen(word))==0;
 }
 
-int autocomplete(i8 *buffer,i8 *matches[]){
+int autocomplete(i8 *buffer,i8 *matches[],bool search_in_current_dir){
 
       i32 matches_count=0;
-    
+     
       if(starts_with(buffer,"echo")){
          matches[0]=strdup("echo");
         //  strcpy(buffer,"echo ");
@@ -53,57 +53,78 @@ int autocomplete(i8 *buffer,i8 *matches[]){
         // strcpy(buffer,"exit ");
         return 1;
       }else{
-           
-          i8 path_copy[1024];
-          i8 *path_env=getenv("PATH");
-          if(!path_env){
-              fprintf(stderr,"Path is not set: %s\n",strerror(errno));
-              exit(1);
-          }
 
-          strncpy(path_copy,path_env,sizeof(path_copy)-1);
-          path_copy[sizeof(path_copy)-1]='\0';
+          if(search_in_current_dir){
+            DIR *d=opendir(".");
 
-          i8 *dir=strtok(path_copy,":");
+            if(d){
 
-          
-       
+                struct dirent *entry;
 
-          while(dir!=NULL){
-            
-
-
-              DIR *d=opendir(dir);
-              
-              if(d){
-
-
-                 struct dirent *entry;
-
-                  
                 while((entry=readdir(d))!=NULL){
-
-                     i8 full_path[1024];
-                     snprintf(full_path,sizeof(full_path),"%s/%s",dir,entry->d_name);
-
-                     if(starts_with(buffer,entry->d_name) && access(full_path,X_OK)==0){
+                     if(starts_with(buffer,entry->d_name)){
                          matches[matches_count++]=strdup(entry->d_name);
-                        //  strcpy(buffer,entry->d_name);
-                        //  strcat(buffer," ");
-                        //  closedir(d);
-                        //  return 1;
+                         break;
                      }
-                        
                 }
 
+            }
+
+            closedir(d);
+
+          }else{
+
+              i8 path_copy[1024];
+              i8 *path_env=getenv("PATH");
+              if(!path_env){
+                  fprintf(stderr,"Path is not set: %s\n",strerror(errno));
+                  exit(1);
               }
-
-             closedir(d);
-
-              dir=strtok(NULL,":");
-
-
+    
+    
+              strncpy(path_copy,path_env,sizeof(path_copy)-1);
+              path_copy[sizeof(path_copy)-1]='\0';
+    
+              i8 *dir=strtok(path_copy,":");
+    
+              
+              while(dir!=NULL){
+                
+    
+    
+                  DIR *d=opendir(dir);
+                  
+                  if(d){
+    
+    
+                     struct dirent *entry;
+    
+                      
+                    while((entry=readdir(d))!=NULL){
+    
+                         i8 full_path[1024];
+                         snprintf(full_path,sizeof(full_path),"%s/%s",dir,entry->d_name);
+    
+                         if(starts_with(buffer,entry->d_name) && access(full_path,X_OK)==0){
+                             matches[matches_count++]=strdup(entry->d_name);
+                            //  strcpy(buffer,entry->d_name);
+                            //  strcat(buffer," ");
+                            //  closedir(d);
+                            //  return 1;
+                         }
+                            
+                    }
+    
+                  }
+    
+                 closedir(d);
+    
+                  dir=strtok(NULL,":");
+    
+    
+              }
           }
+           
 
           if(matches_count>0){
 
@@ -206,8 +227,6 @@ void parse_arguments(i8 *input,i8 *args[],Redirect *redirect){
                  }else if(fd==2){
                      redirect->stderr_file=strdup(file);
                  }
-
-                
 
                  break;
                
@@ -345,14 +364,28 @@ void parse_commands(){
             
              i8 *matches[255];
 
-             i32 matches_count=autocomplete(buffer->input,matches);
+             i8 *last_space=strrchr(buffer->input,' ');
+             bool search_in_current_dir=false;
+             if(last_space!=NULL){
+                   search_in_current_dir=true;
+             }
+             i8 *current_word=(last_space==NULL)?buffer->input:last_space+1;
+
+             i32 matches_count=autocomplete(current_word,matches,search_in_current_dir);
 
              if(matches_count==0){
                   printf("\a");
              }else if(matches_count==1){
                    if(matches[0]!=NULL){
 
-                       strcpy(buffer->input,matches[0]);
+                       if(search_in_current_dir){
+                             strcpy(current_word,matches[0]);
+                             
+                       }else{
+                            strcpy(buffer->input,matches[0]);
+                       }
+
+                       
                        strcat(buffer->input," ");
                       
                    }
@@ -360,10 +393,7 @@ void parse_commands(){
                   len=strlen(buffer->input);
                   tab_count=0;
              }else{
-
-                
-                
-                    
+    
                       i32 lcp_length=longest_common_prefix(matches,matches_count);
 
                       if(lcp_length>strlen(buffer->input)){
@@ -387,6 +417,7 @@ void parse_commands(){
                                     }
                                     free(matches[i]);
                               }
+                                
 
                                 printed_something=true;
 
@@ -397,10 +428,7 @@ void parse_commands(){
                   
              }
 
-
-                     
-                 
-                 
+ 
              }else{
                    if(len<MAX_BUFFER_SIZE-1){
 
