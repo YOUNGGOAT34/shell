@@ -17,7 +17,11 @@
 #define MAX_BUFFER_SIZE 128
 #define MAX_ARGS_SIZE 32
 
-
+typedef struct{
+        bool search_in_current_dir;
+         bool search_in_subdirectory;
+         bool directory_autocomplete;
+}AUTO;
 
 void parse_commands();
 

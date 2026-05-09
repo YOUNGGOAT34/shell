@@ -94,6 +94,7 @@ int autocomplete(i8 *buffer,i8 *matches[],AUTO *auto_complete){
 
           }else if(auto_complete->search_in_subdirectory){
                
+               
                i8 *last_forwadslash=strrchr(buffer,'/');
                 
                i8 *file_name;
@@ -117,11 +118,22 @@ int autocomplete(i8 *buffer,i8 *matches[],AUTO *auto_complete){
                 if(d){
                     struct dirent *entry;
                     while((entry=readdir(d))!=NULL){
-                          if(starts_with(file_name,entry->d_name)){
+                           
+                          if(starts_with(file_name,entry->d_name) || strcmp(file_name,"")==0){
+
                                    
-                                 
+
+                                   if(strcmp(entry->d_name,".")==0 || strcmp(entry->d_name,"..")==0){
+                                        continue;
+                                   }
+                                   
                                    strcpy(last_forwadslash+1,entry->d_name);
                                    matches[matches_count++]=strdup(buffer);
+
+                                   if(entry->d_type==DT_DIR){
+                                        strcat(matches[0],"/");
+                                        auto_complete->directory_autocomplete=true;
+                                   }
 
                                    
                                
@@ -153,8 +165,6 @@ int autocomplete(i8 *buffer,i8 *matches[],AUTO *auto_complete){
               
               while(dir!=NULL){
                 
-    
-    
                   DIR *d=opendir(dir);
                   
                   if(d){
@@ -196,10 +206,6 @@ int autocomplete(i8 *buffer,i8 *matches[],AUTO *auto_complete){
 
            
           }
-
-
-          
-
 
       }
 
