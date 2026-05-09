@@ -43,24 +43,24 @@ int starts_with(i8 *word,i8* cmd){
      return strncmp(cmd,word,strlen(word))==0;
 }
 
-int autocomplete(i8 *buffer,i8 *matches[],bool search_in_current_dir,bool search_in_subdirectory){
+int autocomplete(i8 *buffer,i8 *matches[],AUTO *auto_complete){
 
       i32 matches_count=0;
      
       if(starts_with(buffer,"echo")){
          
          matches[0]=strdup("echo");
-        //  strcpy(buffer,"echo ");
+        
          return 1;
       }else if(starts_with(buffer,"exit")){
          matches[0]=strdup("exit");
-        // strcpy(buffer,"exit ");
+        
         return 1;
       }else{
 
           
 
-          if(search_in_current_dir){
+          if(auto_complete->search_in_current_dir){
             
             DIR *d=opendir(".");
 
@@ -73,14 +73,14 @@ int autocomplete(i8 *buffer,i8 *matches[],bool search_in_current_dir,bool search
                 while((entry=readdir(d))!=NULL){
                      if(starts_with(buffer,entry->d_name) || strcmp(buffer,"")==0){
 
-                       
-
+                    
                         if(entry->d_type==DT_DIR){
-
-                             printf("Here\n");
-
+                            if(strcmp(entry->d_name,".")==0 || strcmp(entry->d_name,"..")==0){
+                                continue;
+                            }
                             matches[matches_count++]=strdup(entry->d_name);
                             strcat(matches[0],"/");
+                            auto_complete->directory_autocomplete=true;
                             break;
                         }
 
@@ -92,15 +92,11 @@ int autocomplete(i8 *buffer,i8 *matches[],bool search_in_current_dir,bool search
 
             closedir(d);
 
-          }else if(search_in_subdirectory){
+          }else if(auto_complete->search_in_subdirectory){
                
-               
-             
                i8 *last_forwadslash=strrchr(buffer,'/');
                 
-               
-
-              i8 *file_name;
+               i8 *file_name;
 
                i8 *directory;
 
@@ -122,9 +118,12 @@ int autocomplete(i8 *buffer,i8 *matches[],bool search_in_current_dir,bool search
                     struct dirent *entry;
                     while((entry=readdir(d))!=NULL){
                           if(starts_with(file_name,entry->d_name)){
-                            
+                                   
+                                 
                                    strcpy(last_forwadslash+1,entry->d_name);
                                    matches[matches_count++]=strdup(buffer);
+
+                                   
                                
                                break;
                           }
@@ -171,10 +170,7 @@ int autocomplete(i8 *buffer,i8 *matches[],bool search_in_current_dir,bool search
     
                          if(starts_with(buffer,entry->d_name) && access(full_path,X_OK)==0){
                              matches[matches_count++]=strdup(entry->d_name);
-                            //  strcpy(buffer,entry->d_name);
-                            //  strcat(buffer," ");
-                            //  closedir(d);
-                            //  return 1;
+                          
                          }
                             
                     }
@@ -427,11 +423,13 @@ void parse_commands(){
              i8 *last_space=strrchr(buffer->input,' ');
            
 
-             bool search_in_current_dir=false;
-             bool search_in_subdirectory=false;
+             AUTO *auto_complete=malloc(sizeof(AUTO));
+             auto_complete->search_in_current_dir=false;
+             auto_complete->directory_autocomplete=false;
+             auto_complete->search_in_subdirectory=false;
 
              if(last_space!=NULL){
-                   search_in_current_dir=true;
+                   auto_complete->search_in_current_dir=true;
              }
 
              i8 *current_word=(last_space==NULL)?buffer->input:last_space+1;
@@ -440,31 +438,35 @@ void parse_commands(){
 
              if(forwadslash!=NULL){
                
-                 search_in_current_dir=false;
-                 search_in_subdirectory=true;
+                 auto_complete->search_in_current_dir=false;
+                 auto_complete->search_in_subdirectory=true;
              }
 
-             i32 matches_count=autocomplete(current_word,matches,search_in_current_dir,search_in_subdirectory);
+             i32 matches_count=autocomplete(current_word,matches,auto_complete);
 
              if(matches_count==0){
                   printf("\a");
              }else if(matches_count==1){
                    if(matches[0]!=NULL){
 
-                       if(search_in_current_dir){
+                       if(auto_complete->search_in_current_dir){
                              strcpy(current_word,matches[0]);
                              
-                       }else if(search_in_subdirectory){
+                       }else if(auto_complete->search_in_subdirectory){
                              strcpy(current_word,matches[0]);
                               
                        } else{
                             strcpy(buffer->input,matches[0]);
                        }
 
-                       
-                       strcat(buffer->input," ");
+                       if(!auto_complete->directory_autocomplete){
+
+                           strcat(buffer->input," ");
+                       }
                       
                    }
+
+                   free(auto_complete);
 
                   len=strlen(buffer->input);
                   tab_count=0;
@@ -504,6 +506,8 @@ void parse_commands(){
                   
              }
 
+             
+
  
              }else{
                    if(len<MAX_BUFFER_SIZE-1){
@@ -518,6 +522,7 @@ void parse_commands(){
 
                     printf("\r\033[K$ %s",buffer->input);
                     fflush(stdout);
+                    
                 
 
 
