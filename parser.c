@@ -62,6 +62,7 @@ int autocomplete(i8 *buffer,i8 *matches[],AUTO *auto_complete){
 
           if(auto_complete->search_in_current_dir){
             
+            
             DIR *d=opendir(".");
 
             if(d){
@@ -71,18 +72,24 @@ int autocomplete(i8 *buffer,i8 *matches[],AUTO *auto_complete){
               
 
                 while((entry=readdir(d))!=NULL){
+                     
                      if(starts_with(buffer,entry->d_name) || strcmp(buffer,"")==0){
-
+                        
+                       
                     
                         if(entry->d_type==DT_DIR){
                             if(strcmp(entry->d_name,".")==0 || strcmp(entry->d_name,"..")==0){
                                 continue;
                             }
                             matches[matches_count++]=strdup(entry->d_name);
-                            strcat(matches[0],"/");
+                            strcat(matches[matches_count-1],"/");
                             auto_complete->directory_autocomplete=true;
-                            break;
+                           
+                        }else{
+                            matches[matches_count++]=strdup(entry->d_name);
                         }
+
+                        
 
                         
                      }
@@ -122,7 +129,6 @@ int autocomplete(i8 *buffer,i8 *matches[],AUTO *auto_complete){
                           if(starts_with(file_name,entry->d_name) || strcmp(file_name,"")==0){
 
                                    
-
                                    if(strcmp(entry->d_name,".")==0 || strcmp(entry->d_name,"..")==0){
                                         continue;
                                    }
@@ -131,13 +137,13 @@ int autocomplete(i8 *buffer,i8 *matches[],AUTO *auto_complete){
                                    matches[matches_count++]=strdup(buffer);
 
                                    if(entry->d_type==DT_DIR){
-                                        strcat(matches[0],"/");
+                                        strcat(matches[matches_count-1],"/");
                                         auto_complete->directory_autocomplete=true;
                                    }
 
                                    
                                
-                               break;
+                              
                           }
                     }
                 }
