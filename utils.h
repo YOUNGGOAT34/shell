@@ -1,7 +1,16 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#include <stdbool.h>
+
+#include <stdio.h>
+#include <errno.h>
+#include<stdint.h>
+#include <unistd.h>
+#include <string.h>
+#include<stdbool.h>
+#include<stdlib.h>
+#include <termios.h>
+#include <dirent.h>
 
 
 typedef unsigned int u32;
@@ -23,5 +32,13 @@ typedef struct {
     bool append;
 
 }Redirect;
+
+
+typedef struct{
+        bool search_in_current_dir;
+         bool search_in_subdirectory;
+         bool directory_autocomplete;
+         bool is_file;
+}AUTO;
 
 #endif
