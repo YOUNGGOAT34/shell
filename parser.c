@@ -9,22 +9,19 @@ i32 longest_common_prefix(i8 *matches[],i32 matches_count){
 
     i32 count=0;
 
-    for(int i=0;matches[0][i]!='\0';i++){
+    for(i32 i=0;matches[0][i]!='\0';i++){
           
         i8 current_char=matches[0][i];
 
-        for(int j=1;j<matches_count;j++){
-              if(matches[j][i]=='\0' || matches[j][i]!=current_char){
-                 
-                 return count;
-              }
+        for(i32 j=1;j<matches_count;j++){
 
-             
+              if(matches[j][i]=='\0' || matches[j][i]!=current_char){
+                 return count;
+              }  
         }
 
-         count++;
-
-       
+          count++;
+        
     }
 
     return count;
@@ -37,9 +34,11 @@ int comparator(const void *a,const void *b){
 
 
 int starts_with(i8 *word,i8* cmd){
-    if(strlen(word)==0){
+    if(strcmp(word,"")==0){
         return 0;
     }
+
+    
      return strncmp(cmd,word,strlen(word))==0;
 }
 
@@ -58,8 +57,6 @@ int autocomplete(i8 *buffer,i8 *matches[],AUTO *auto_complete){
         return 1;
       }else{
 
-          
-
           if(auto_complete->search_in_current_dir){
             
             
@@ -75,22 +72,24 @@ int autocomplete(i8 *buffer,i8 *matches[],AUTO *auto_complete){
                      
                      if(starts_with(buffer,entry->d_name) || strcmp(buffer,"")==0){
                         
-                       
-                    
                         if(entry->d_type==DT_DIR){
                             if(strcmp(entry->d_name,".")==0 || strcmp(entry->d_name,"..")==0){
                                 continue;
                             }
-                            matches[matches_count++]=strdup(entry->d_name);
-                            strcat(matches[matches_count-1],"/");
+
+                            
+
+                            matches[matches_count]=malloc(strlen(entry->d_name)+2);
+                            strcpy(matches[matches_count],entry->d_name);
+                            strcat(matches[matches_count],"/");
                             auto_complete->directory_autocomplete=true;
+
+                            matches_count++;
                            
                         }else{
+                            auto_complete->is_file=true;
                             matches[matches_count++]=strdup(entry->d_name);
                         }
-
-                        
-
                         
                      }
                 }
@@ -100,11 +99,14 @@ int autocomplete(i8 *buffer,i8 *matches[],AUTO *auto_complete){
             closedir(d);
 
           }else if(auto_complete->search_in_subdirectory){
+
+              
                
                
                i8 *last_forwadslash=strrchr(buffer,'/');
                 
                i8 *file_name;
+               i8 *file_name_copy;
 
                i8 *directory;
 
@@ -113,6 +115,7 @@ int autocomplete(i8 *buffer,i8 *matches[],AUTO *auto_complete){
                  file_name=buffer;
                }else{
                     file_name=last_forwadslash+1;
+                    
                     i32 len=last_forwadslash-buffer;
                     directory=malloc(len+1);
                     strncpy(directory,buffer,len);
@@ -121,24 +124,36 @@ int autocomplete(i8 *buffer,i8 *matches[],AUTO *auto_complete){
                }
 
                 DIR *d=opendir(directory);
+                file_name_copy=strdup(file_name);
                 
                 if(d){
                     struct dirent *entry;
                     while((entry=readdir(d))!=NULL){
-                           
-                          if(starts_with(file_name,entry->d_name) || strcmp(file_name,"")==0){
-
+                         
+                        
+                          if(starts_with(file_name_copy,entry->d_name) || strcmp(file_name_copy,"")==0){
+                               
                                    
                                    if(strcmp(entry->d_name,".")==0 || strcmp(entry->d_name,"..")==0){
                                         continue;
                                    }
-                                   
+
+                                
                                    strcpy(last_forwadslash+1,entry->d_name);
-                                   matches[matches_count++]=strdup(buffer);
+                                  
 
                                    if(entry->d_type==DT_DIR){
-                                        strcat(matches[matches_count-1],"/");
+
+                                        matches[matches_count]=malloc(strlen(entry->d_name)+2);
+
+                                        strcpy(matches[matches_count],entry->d_name);
+                                       
+                                        strcat(matches[matches_count],"/");
                                         auto_complete->directory_autocomplete=true;
+                                        matches_count++;
+                                   }else{
+                                        auto_complete->is_file=true;
+                                        matches[matches_count++]=strdup(buffer);
                                    }
 
                                    
@@ -192,8 +207,12 @@ int autocomplete(i8 *buffer,i8 *matches[],AUTO *auto_complete){
                     }
     
                   }
+
+                  if(d){
+
+                      closedir(d);
+                  }
     
-                 closedir(d);
     
                   dir=strtok(NULL,":");
     
@@ -201,17 +220,6 @@ int autocomplete(i8 *buffer,i8 *matches[],AUTO *auto_complete){
               }
           }
            
-
-          if(matches_count>0){
-
-              if(matches_count==1){
-                strcpy(buffer,matches[0]);
-                strcat(buffer," ");
-                
-              }
-
-           
-          }
 
       }
 
@@ -364,7 +372,7 @@ void parse_commands(){
 
 
       static i32 tab_count=0;
-      i8 last_buffer[MAX_BUFFER_SIZE];
+      i8 last_buffer[MAX_BUFFER_SIZE]={0};
       bool printed_something=false;
 
       
@@ -410,23 +418,12 @@ void parse_commands(){
         enable_raw_mode(&original_termios);
         while(true){
              i8 c;
-
-
-             
-
              read(STDIN_FILENO,&c,1);
 
              if(c=='\n'){
                  printf("\n");
                  break;
              }else if(c=='\t'){
-
-
-
-            if(strcmp(buffer->input,last_buffer)!=0){
-                      tab_count=0;
-                     strcpy(last_buffer,buffer->input);
-             }
 
 
              tab_count++;
@@ -439,6 +436,7 @@ void parse_commands(){
              auto_complete->search_in_current_dir=false;
              auto_complete->directory_autocomplete=false;
              auto_complete->search_in_subdirectory=false;
+             auto_complete->is_file=false;
 
              if(last_space!=NULL){
                    auto_complete->search_in_current_dir=true;
@@ -454,18 +452,53 @@ void parse_commands(){
                  auto_complete->search_in_subdirectory=true;
              }
 
-             i32 matches_count=autocomplete(current_word,matches,auto_complete);
 
+             i8 current_word_copy[MAX_BUFFER_SIZE];
+             strcpy(current_word_copy,current_word);
+
+             i32 matches_count=autocomplete(current_word_copy,matches,auto_complete);
+
+               
+            
+
+            
              if(matches_count==0){
                   printf("\a");
+                  continue;
              }else if(matches_count==1){
+                  
+                  
+                 
+                   
                    if(matches[0]!=NULL){
 
                        if(auto_complete->search_in_current_dir){
+                             
+                             
                              strcpy(current_word,matches[0]);
                              
                        }else if(auto_complete->search_in_subdirectory){
-                             strcpy(current_word,matches[0]);
+
+
+                             
+                            
+
+                              i8 *last_slash_in_current_word=strrchr(current_word,'/');
+
+                              if(last_slash_in_current_word==NULL){
+                                    strcpy(current_word,matches[0]);
+                              }else{
+
+                                  
+                                  if(auto_complete->is_file){
+                                        strcpy(current_word,matches[0]);
+                                  }else{
+                                        strcpy(last_slash_in_current_word+1,matches[0]);
+                                  }
+                                 
+                              }
+                               
+                              
                               
                        } else{
                             strcpy(buffer->input,matches[0]);
@@ -483,45 +516,75 @@ void parse_commands(){
                   len=strlen(buffer->input);
                   tab_count=0;
              }else{
-    
-                      i32 lcp_length=longest_common_prefix(matches,matches_count);
 
-                      if(lcp_length>strlen(buffer->input)){
+                       i32 lcp_length=longest_common_prefix(matches,matches_count);
+
+                                i32 current_word_len;
+
+                                if(last_space==NULL){
+                                     current_word_len=strlen(buffer->input);
+                                }else{
+                                     current_word_len=strlen(last_space+1);
+                                }
+
+                     
+
+                      if(tab_count==1){
+                           if(lcp_length>current_word_len){
+
+                               strncpy(current_word,matches[0],lcp_length);
+                                        current_word[lcp_length]='\0';
+                                        len=strlen(buffer->input);
+                                        tab_count=0;
+                           }else{
+                                 printf("\a");
+                                  continue;
+                           }
+                           
+                          
+                          
+                      }else if(tab_count>=2){
+                               
+
+                                if(lcp_length>current_word_len){
+
+                                        
+                                        
+                                        strncpy(current_word,matches[0],lcp_length);
+                                        current_word[lcp_length]='\0';
+                                        len=strlen(buffer->input);
+                                        tab_count=0;
+
                          
-                          strncpy(buffer->input,matches[0],lcp_length);
-                          buffer->input[lcp_length]='\0';
-                          len=strlen(buffer->input);
-                          tab_count=0;
-                      }else{
-                          if(tab_count==1){
-                             printf("\a");
-                          }else{
-                             qsort(matches,matches_count,sizeof(i8 *),comparator);
-                             printf("\n");
+                                }else{
+                                            
+                                            qsort(matches,matches_count,sizeof(i8 *),comparator);
+                                            printf("\n");
 
-                             for(i32 i=0;i<matches_count;i++){
-                            
-                                    printf("%s", matches[i]);
-                                    if(i!=matches_count-1){
-                                        printf("  ");
+                                            for(i32 i=0;i<matches_count;i++){
+                                            
+                                                    printf("%s", matches[i]);
+                                                    if(i!=matches_count-1){
+                                                        printf("  ");
+                                                    }
+
+                                                    free(matches[i]);
+                                            }
+                                                
+                                                // printed_something=true;
+
+                                                printf("\n");
+                                        
                                     }
-                                    free(matches[i]);
-                              }
-                                
-
-                                printed_something=true;
-
-                                printf("\n");
-                          }
-                      }
-   
+                      }      
                   
              }
-
-             
-
  
              }else{
+
+                    tab_count=0;
+
+                    
                    if(len<MAX_BUFFER_SIZE-1){
 
                        buffer->input[len++]=c;
@@ -605,6 +668,7 @@ void parse_commands(){
             execute_program(command,args,redirect);
             
          }
+           
 
 
          if(redirect->stderr_file){

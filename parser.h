@@ -21,6 +21,7 @@ typedef struct{
         bool search_in_current_dir;
          bool search_in_subdirectory;
          bool directory_autocomplete;
+         bool is_file;
 }AUTO;
 
 void parse_commands();
