@@ -8,6 +8,9 @@ void execute_program(i8 *command,i8 *args[],Redirect *redirect){
 
    if(strchr(command,'/')){
 
+
+          
+
       
           pid_t pid=fork();
 
@@ -16,7 +19,7 @@ void execute_program(i8 *command,i8 *args[],Redirect *redirect){
                perror("Fork failed");
                return;
          }
-   
+          
           if(pid==0){
                
               if(redirect->stdout_file!=NULL){

@@ -56,7 +56,7 @@ void disable_raw_mode(struct termios *original_termios){
 
 void parse_arguments(i8 *input,i8 *args[],Redirect *redirect){
 
-  
+          
          i8 *current_arg=malloc(1024);
          int i=0;//keep track of args index
          int j=0;//keep track of current arg index
@@ -184,8 +184,7 @@ void parse_commands(){
       bool printed_something=false;
 
       
-       
-
+    
       while(true){
 
          printed_something=false;
@@ -199,11 +198,6 @@ void parse_commands(){
          buffer->input=malloc(MAX_BUFFER_SIZE);
          buffer->size=0;
 
-
-
-   
-         
-      
         //  i8 *cwd=getcwd(NULL,0);
         //  i8 *home=getenv("HOME");
 
@@ -237,12 +231,15 @@ void parse_commands(){
                  break;
              }else if(c=='\t'){
 
+             
+
 
              tab_count++;
              i8 *matches[255];
 
              i8 *last_space=strrchr(buffer->input,' ');
-           
+             
+
 
              AUTO *auto_complete=malloc(sizeof(AUTO));
              auto_complete->search_in_current_dir=false;
@@ -250,8 +247,65 @@ void parse_commands(){
              auto_complete->search_in_subdirectory=false;
              auto_complete->is_file=false;
 
+             
+
              if(last_space!=NULL){
-                   auto_complete->search_in_current_dir=true;
+
+                  
+
+                   if(*(last_space+strspn(last_space," "))=='\0'){
+                        
+                         completion *comp=malloc(sizeof(completion));
+
+
+                        
+                        
+                        if(execute_completion_script(buffer->input,comp)){
+
+                            
+                             i8 *args[]={comp->completion_path,comp->completion_name," ",NULL};
+
+                              
+                             
+
+                             i8 *match_=execute_completion_program(comp->completion_path,args);
+                             strcat(match_," ");
+
+                            
+
+                             if(match_){
+
+
+                                 strcpy(last_space+1,match_);
+                                 free(match_);
+                             }
+
+
+                             if(comp->completion_name){
+                                 free(comp->completion_name);
+                             }
+                            
+                             if(comp->completion_path){
+                                free(comp->completion_path);
+                             }
+
+
+                              free(comp);
+
+                              printf("\r\033[K$ %s",buffer->input);
+                              fflush(stdout);
+                              break;;
+
+                             
+                        }else{
+                             auto_complete->search_in_current_dir=true;
+                        }
+
+                   }else{
+                       
+                        auto_complete->search_in_current_dir=true;
+                   } 
+                   
              }
 
              i8 *current_word=(last_space==NULL)?buffer->input:last_space+1;
@@ -272,7 +326,7 @@ void parse_commands(){
 
                
             
-
+      
             
              if(matches_count==0){
                   printf("\a");
@@ -291,7 +345,7 @@ void parse_commands(){
                              
                        }else if(auto_complete->search_in_subdirectory){
 
-
+                              
                             
                               i8 *last_slash_in_current_word=strrchr(current_word,'/');
 
