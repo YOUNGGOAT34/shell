@@ -7,6 +7,7 @@
 #include "execute.h"
 #include "pwd.h"
 #include "cd.h"
+#include "complete.h"
 
 
 

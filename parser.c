@@ -180,11 +180,11 @@ void parse_commands(){
 
 
       static i32 tab_count=0;
-      i8 last_buffer[MAX_BUFFER_SIZE]={0};
+    //   i8 last_buffer[MAX_BUFFER_SIZE]={0};
       bool printed_something=false;
 
       
-
+       
 
       while(true){
 
@@ -226,7 +226,11 @@ void parse_commands(){
         enable_raw_mode(&original_termios);
         while(true){
              i8 c;
-             read(STDIN_FILENO,&c,1);
+             i32 bytes_read=read(STDIN_FILENO,&c,1);
+             if(bytes_read<=0){
+                disable_raw_mode(&original_termios);
+                exit(0);
+             }
 
              if(c=='\n'){
                  printf("\n");
@@ -288,9 +292,7 @@ void parse_commands(){
                        }else if(auto_complete->search_in_subdirectory){
 
 
-                             
                             
-
                               i8 *last_slash_in_current_word=strrchr(current_word,'/');
 
                               if(last_slash_in_current_word==NULL){
@@ -434,6 +436,8 @@ void parse_commands(){
    
          parse_arguments(buffer->input,args,redirect);
 
+         u32 args_size=sizeof(args)/sizeof(args[0]);
+
       
 
          i8 *command=args[0];
@@ -470,9 +474,13 @@ void parse_commands(){
 
          }else if(strcmp("cd",command)==0){
                  change_directory(args[1]);
-         }
-         
-         else{
+         }else if(strcmp("complete",command)==0){
+
+             
+              complete(args,args_size);
+                 
+
+         }else{
             execute_program(command,args,redirect);
             
          }
