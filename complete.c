@@ -147,7 +147,7 @@ bool execute_completion_script(i8 *buffer,completion *comple){
 }
 
 
-i8 *execute_completion_program(i8 *path,i8 *args[]){
+i8 *execute_completion_program(i8 *path,i8 *args[],i8 *completion_line){
 
       i32 pipefd[2];
       pipe(pipefd);
@@ -160,6 +160,12 @@ i8 *execute_completion_program(i8 *path,i8 *args[]){
       }
 
       if(pid==0){
+
+            i8 point[16];
+            snprintf(point,sizeof(point),"%d",(int)strlen(completion_line));
+
+            setenv("COMP_LINE",completion_line,1);
+            setenv("COMP_POINT",point,1);
 
             close(pipefd[0]);
             dup2(pipefd[1],STDOUT_FILENO);

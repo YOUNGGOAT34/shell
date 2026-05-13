@@ -281,8 +281,9 @@ void parse_commands(){
         
                               
                              
+                             i8 *completion_line=strdup(buffer->input);
+                             i8 *match_=execute_completion_program(comp->completion_path,args,completion_line);
 
-                             i8 *match_=execute_completion_program(comp->completion_path,args);
                              
                              
                              if(match_){
@@ -313,6 +314,7 @@ void parse_commands(){
 
 
                               free(comp);
+                              free(completion_line);
 
                               printf("\r\033[K$ %s",buffer->input);
                               fflush(stdout);
