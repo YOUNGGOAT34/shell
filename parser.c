@@ -253,31 +253,53 @@ void parse_commands(){
 
                   
 
-                   if(*(last_space+strspn(last_space," "))=='\0'){
-                        
-                         completion *comp=malloc(sizeof(completion));
+                 
+                 completion *comp=malloc(sizeof(completion));
 
-
-                        
-                        
-                        if(execute_completion_script(buffer->input,comp)){
-
+                 
+                 
+                 if(execute_completion_script(buffer->input,comp)){
                             
-                             i8 *args[]={comp->completion_path,comp->completion_name," ",NULL};
 
+                             i8 *previous_space=last_space-1;
+                             i8 previous_word[MAX_BUFFER_SIZE];
+
+                             i8 *current_word=last_space+1;
+
+                             while(previous_space>buffer->input && *previous_space!=' '){
+                                  previous_space--;
+                             }
+
+                             if(*previous_space==' '){
+                                i32 len=last_space-(previous_space+1);
+                                strncpy(previous_word,previous_space+1,len);
+                                previous_word[len]='\0';
+                             }
+
+                             
+                             i8 *args[]={comp->completion_path,comp->completion_name,current_word,previous_word,NULL};
+        
                               
                              
 
                              i8 *match_=execute_completion_program(comp->completion_path,args);
-                             strcat(match_," ");
-
-                            
-
+                             
+                             
                              if(match_){
+                                 
+                                 i8 *newline=strchr(match_,'\n');
+                                if(newline) *newline='\0';
+    
+                                 strcat(match_," ");
 
+                               
 
                                  strcpy(last_space+1,match_);
+                                 len=strlen(buffer->input);
                                  free(match_);
+                             }else{
+                                printf("\a");
+                                fflush(stdout);
                              }
 
 
@@ -294,17 +316,14 @@ void parse_commands(){
 
                               printf("\r\033[K$ %s",buffer->input);
                               fflush(stdout);
-                              break;;
+                              continue;
 
                              
                         }else{
                              auto_complete->search_in_current_dir=true;
                         }
 
-                   }else{
-                       
-                        auto_complete->search_in_current_dir=true;
-                   } 
+                  
                    
              }
 

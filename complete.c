@@ -107,15 +107,19 @@ void complete(i8 *args[],u32 args_size){
 
 bool execute_completion_script(i8 *buffer,completion *comple){
          i8 completion_name_copy[MAX_BUFFER_SIZE];
-         i8 *end=buffer+strlen(buffer)-1;
+      //    i8 *end=buffer+strlen(buffer)-1;
 
 
-         while(end>buffer && *end==' '){
-            end--;
+        i32 i=0;
+         while(buffer[i]!=' ' && buffer[i]!='\0'){
+             completion_name_copy[i]=buffer[i];
+             i++;
          }
 
-         strncpy(completion_name_copy,buffer,end-buffer+1);
-         completion_name_copy[end-buffer+1]='\0';
+         completion_name_copy[i]='\0';
+
+         
+         
 
          
          completion *comp=search_completion(completion_name_copy);
@@ -124,13 +128,15 @@ bool execute_completion_script(i8 *buffer,completion *comple){
 
          if(comp){
 
-           
-
+      
             comple->completion_name=strdup(comp->completion_name);
             comple->completion_path=strdup(comp->completion_path);
             
             return true;
          }
+
+         
+
 
          comple->completion_name=NULL;
          comple->completion_path=NULL;
