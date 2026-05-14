@@ -291,6 +291,12 @@ void parse_commands(){
                              
                              
                              if(matches_count>0){
+
+                                i8 *currrent_word=(last_space==NULL)?buffer->input:last_space+1;
+
+                                i32 current_word_len=strlen(current_word);
+                                i32 lcp_length=longest_common_prefix(matches,matches_count);
+
                                   
                                  if(tab_count==1){
                                      if(matches_count==1){
@@ -302,28 +308,54 @@ void parse_commands(){
                                         }
                                          
                                      }else{
-                                          printf("\a");
-                                          continue;
+                                          if(lcp_length>current_word_len){
+
+                                              strncpy(current_word,matches[0],lcp_length);
+                                              current_word[lcp_length]='\0';
+                                              len=strlen(buffer->input);
+                                              tab_count=0;
+
+                                          }else{
+                                               printf("\a");
+                                               continue;
+                                          }
+                                          
                                      }
                                      
                                  }
 
                                  if(tab_count>=2){
 
-                                    qsort(matches,matches_count,sizeof(i8 *),comparator);
 
-                                    printf("\n");
 
-                                    for(i32 i=0;i<matches_count;i++){
-                                          printf("%s",matches[i]);
-                                          if(i!=matches_count-1){
-                                                 printf("  ");
-                                          }
+                                    if(lcp_length>current_word_len){
 
-                                          free(matches[i]);
+                                              strncpy(current_word,matches[0],lcp_length);
+                                              current_word[lcp_length]='\0';
+                                              len=strlen(buffer->input);
+                                              tab_count=0;
+
+                                    }else{
+
+                                        qsort(matches,matches_count,sizeof(i8 *),comparator);
+    
+                                        printf("\n");
+    
+                                        for(i32 i=0;i<matches_count;i++){
+                                              printf("%s",matches[i]);
+                                              if(i!=matches_count-1){
+                                                     printf("  ");
+                                              }
+    
+                                              free(matches[i]);
+                                        }
+    
+                                        printf("\n");
                                     }
 
-                                    printf("\n");
+
+                                    
+
                                       
                                  }
                                 
@@ -536,14 +568,12 @@ void parse_commands(){
          redirect->redirect_flag=false;
          redirect->append=false;
 
-   
-   
+
          parse_arguments(buffer->input,args,redirect);
 
          u32 args_size=sizeof(args)/sizeof(args[0]);
 
       
-
          i8 *command=args[0];
          
          if(command==NULL){
@@ -557,8 +587,6 @@ void parse_commands(){
             free(buffer->input);
             free(buffer);
             break;
-         
-
          
          }else if(strcmp("type",command)==0){
               
@@ -589,8 +617,6 @@ void parse_commands(){
             
          }
            
-
-
          if(redirect->stderr_file){
              free(redirect->stderr_file);
          }
