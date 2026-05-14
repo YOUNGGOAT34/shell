@@ -13,6 +13,7 @@ typedef struct{
      i32 job_number;
      i8 *command;
      jobStatus status;
+     pid_t pid;
 
 }Job;
 
