@@ -1,5 +1,6 @@
 
 #include "parser.h"
+#include "jobs.h"
 
 
 
@@ -120,7 +121,6 @@ void parse_arguments(i8 *input,i8 *args[],Redirect *redirect,bool *background_jo
 
 
             if(c=='&'){
-                 
                  *background_job=true;
                  break;
             }
@@ -208,6 +208,11 @@ void parse_commands(){
 
         //  i8 *cwd=getcwd(NULL,0);
         //  i8 *home=getenv("HOME");
+
+        fflush(stdout);
+        fflush(stderr);
+
+        
 
          printf("$ ");
 
@@ -583,7 +588,7 @@ void parse_commands(){
 
 
          u32 args_size=sizeof(args)/sizeof(args[0]);
-        
+
       
          i8 *command=args[0];
 
@@ -599,12 +604,12 @@ void parse_commands(){
          }
 
          if(background_job){
-              create_background_job(args);
+              create_background_job(buffer->input,args);
               continue;
          }
+          
    
-   
-         if(strcmp(command,"exit")==0){
+        if(strcmp(command,"exit")==0){
             free(buffer->input);
             free(buffer);
             break;
@@ -634,7 +639,8 @@ void parse_commands(){
                  
 
          }else if(strcmp(command,"jobs")==0){
-
+                 
+             show_jobs();
               
 
          }else{

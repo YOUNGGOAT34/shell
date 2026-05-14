@@ -194,6 +194,4 @@ void execute_program(i8 *command,i8 *args[],Redirect *redirect){
               printf("%s: command not found\n",command);
          }
 
-    
- 
 }
