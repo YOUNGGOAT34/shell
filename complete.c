@@ -58,6 +58,42 @@ completion *search_completion(i8 *completion_name){
 
 
 
+
+
+bool delete_completion(i8 *completion_name){
+
+       i32 index=hash(completion_name);
+       completion *temp=completions[index];
+       completion *prev=NULL;
+
+       while(temp && strcmp(temp->completion_name,completion_name)!=0){
+            prev=temp;
+            temp=temp->next;
+       }
+
+       if(temp==NULL) return false;
+
+
+
+       if(prev==NULL){
+            completions[index]=temp->next;
+       }else{
+             
+          prev->next=temp->next;
+       }
+
+
+       free(temp->completion_name);
+       free(temp->completion_path);
+       free(temp);
+
+       
+
+       return true;;
+}
+
+
+
 void complete(i8 *args[],u32 args_size){
 
       initialize_completions();
@@ -83,7 +119,16 @@ void complete(i8 *args[],u32 args_size){
                   printf("complete -C '%s' %s\n",comp->completion_path,comp->completion_name);
             }
             
-      }else if(strcmp(args[1],"-C")==0){
+      }else if(strcmp(args[1],"-r")==0){
+
+             if(args_size<3){
+                  fprintf(stderr,"complete: missing completion name\n");
+                  return;
+             }
+
+             delete_completion(args[2]);
+
+      } else if(strcmp(args[1],"-C")==0){
               if(args_size<4){
                   fprintf(stderr,"complete:missing arguments\n");
                   return;
