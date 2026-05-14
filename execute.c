@@ -8,9 +8,6 @@ void execute_program(i8 *command,i8 *args[],Redirect *redirect){
 
    if(strchr(command,'/')){
 
-
-          
-
       
           pid_t pid=fork();
 
@@ -19,7 +16,7 @@ void execute_program(i8 *command,i8 *args[],Redirect *redirect){
                perror("Fork failed");
                return;
          }
-          
+   
           if(pid==0){
                
               if(redirect->stdout_file!=NULL){
@@ -51,14 +48,29 @@ void execute_program(i8 *command,i8 *args[],Redirect *redirect){
               }
 
               if(redirect->stderr_file!=NULL){
-                        i32 fd=open(redirect->stderr_file,O_WRONLY | O_CREAT | O_TRUNC,0644);
-                        if(fd<0){
-                              perror("open");
-                              exit(1);
-                        }
 
-                        dup2(fd,STDERR_FILENO);
-                        close(fd);
+                        if(redirect->append){
+
+                              i32 fd=open(redirect->stderr_file,O_WRONLY | O_CREAT | O_APPEND,0644);
+                              if(fd<0){
+                                    perror("open");
+                                    exit(1);
+                              }
+      
+                              dup2(fd,STDERR_FILENO);
+                              close(fd);
+
+                        }else{
+
+                              i32 fd=open(redirect->stderr_file,O_WRONLY | O_CREAT | O_TRUNC,0644);
+                              if(fd<0){
+                                    perror("open");
+                                    exit(1);
+                              }
+      
+                              dup2(fd,STDERR_FILENO);
+                              close(fd);
+                        }
               }
                 
                
@@ -66,7 +78,7 @@ void execute_program(i8 *command,i8 *args[],Redirect *redirect){
                perror(command);
                exit(1);
           }else{
-             wait(NULL);
+             waitpid(pid,NULL,0);
           }
     
 
@@ -135,23 +147,38 @@ void execute_program(i8 *command,i8 *args[],Redirect *redirect){
                      }
                      
                      if(redirect->stderr_file!=NULL){
-                            
-                              i32 fd=open(redirect->stderr_file,O_WRONLY | O_CREAT | O_TRUNC,0644);
 
-                              if(fd<0){
-                                    perror("open");
-                                    exit(1);
+                              if(redirect->append){
+                                    i32 fd=open(redirect->stderr_file,O_WRONLY | O_CREAT | O_APPEND,0644);
+      
+                                    if(fd<0){
+                                          perror("open");
+                                          exit(1);
+                                    }
+      
+                                    dup2(fd,STDERR_FILENO);
+                                    close(fd);
+
+                              }else{
+                                    i32 fd=open(redirect->stderr_file,O_WRONLY | O_CREAT | O_TRUNC,0644);
+      
+                                    if(fd<0){
+                                          perror("open");
+                                          exit(1);
+                                    }
+      
+                                    dup2(fd,STDERR_FILENO);
+                                    close(fd);
+
                               }
-
-                              dup2(fd,STDERR_FILENO);
-                              close(fd);
+                            
                        }
 
                   execv(full_path,args);
                   perror(command);
                   exit(1);
                }else{
-                     wait(NULL);
+                     waitpid(pid,NULL,0);
                }
    
    
