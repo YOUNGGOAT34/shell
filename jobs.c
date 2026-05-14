@@ -1,5 +1,3 @@
-
-
 #include "jobs.h"
 #include <unistd.h>
 #include<sys/types.h>
@@ -16,12 +14,7 @@ Job jobs[256];
 void create_background_job(i8 *full_command,i8 *args[]){
 
 
-     job_number++;
-
-     jobs[current_job_index].job_number=job_number;
-     jobs[current_job_index].command=strdup(full_command);
-     jobs[current_job_index].status=RUNNING;
-     current_job_index++;
+     
 
 
 
@@ -37,6 +30,14 @@ void create_background_job(i8 *full_command,i8 *args[]){
          perror("execv");
          exit(EXIT_FAILURE);
      }else{
+
+         job_number++;
+
+         jobs[current_job_index].job_number=job_number;
+         jobs[current_job_index].command=strdup(full_command);
+         jobs[current_job_index].status=RUNNING;
+         
+         current_job_index++;
 
          printf("[%d] %d\n",job_number,pid);
          fflush(stdout);
@@ -62,6 +63,13 @@ void show_jobs(){
                        break;      
 
            }
-           printf("[%d]+ %-24s  %s\n",jobs[i].job_number,status_str,jobs[i].command);
+           if(i==current_job_index-1){
+
+              printf("[%d]+ %-24s  %s\n",jobs[i].job_number,status_str,jobs[i].command);
+           }else if(i==current_job_index-2){
+              printf("[%d]- %-24s  %s\n",jobs[i].job_number,status_str,jobs[i].command);
+           }else{
+              printf("[%d]  %-24s  %s\n",jobs[i].job_number,status_str,jobs[i].command);
+           }
       }
 }
