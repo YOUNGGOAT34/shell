@@ -54,12 +54,13 @@ void disable_raw_mode(struct termios *original_termios){
 
 }
 
-void parse_arguments(i8 *input,i8 *args[],Redirect *redirect){
+void parse_arguments(i8 *input,i8 *args[],Redirect *redirect,bool *background_job){
 
           
          i8 *current_arg=malloc(1024);
          int i=0;//keep track of args index
          int j=0;//keep track of current arg index
+         
 
          bool in_single_quotes=false;
          bool in_double_qoutes=false;
@@ -116,6 +117,13 @@ void parse_arguments(i8 *input,i8 *args[],Redirect *redirect){
                  break;
                
              }
+
+
+            if(c=='&'){
+                 
+                 *background_job=true;
+                 break;
+            }
 
 
             if(c=='\'' && !in_double_qoutes){
@@ -568,18 +576,31 @@ void parse_commands(){
          redirect->redirect_flag=false;
          redirect->append=false;
 
+         bool background_job=false;
 
-         parse_arguments(buffer->input,args,redirect);
+
+         parse_arguments(buffer->input,args,redirect,&background_job);
+
 
          u32 args_size=sizeof(args)/sizeof(args[0]);
-
+        
       
          i8 *command=args[0];
+
+         
+
+         
+
          
          if(command==NULL){
              free(buffer->input);
              free(buffer);
              continue;
+         }
+
+         if(background_job){
+              create_background_job(args);
+              continue;
          }
    
    
@@ -614,7 +635,7 @@ void parse_commands(){
 
          }else if(strcmp(command,"jobs")==0){
 
-             
+              
 
          }else{
             execute_program(command,args,redirect);

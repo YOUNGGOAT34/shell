@@ -8,6 +8,8 @@
 #include "pwd.h"
 #include "cd.h"
 #include "complete.h"
+#include "jobs.h"
+
 
 
 
