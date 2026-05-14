@@ -147,7 +147,9 @@ bool execute_completion_script(i8 *buffer,completion *comple){
 }
 
 
-i8 *execute_completion_program(i8 *path,i8 *args[],i8 *completion_line){
+i32 execute_completion_program(i8 *path,i8 *args[],i8 *completion_line,i8 *matches[]){
+
+      i32 matches_count=0;
 
       i32 pipefd[2];
       pipe(pipefd);
@@ -156,7 +158,7 @@ i8 *execute_completion_program(i8 *path,i8 *args[],i8 *completion_line){
 
       if(pid<0){
             perror("fork failed");
-            return NULL;
+            exit(EXIT_FAILURE);
       }
 
       if(pid==0){
@@ -180,22 +182,49 @@ i8 *execute_completion_program(i8 *path,i8 *args[],i8 *completion_line){
             close(pipefd[1]);
 
             i8 buffer[1024];
+            i8 line[1024];
+            i32 line_len=0;
 
-            i32 n=read(pipefd[0],buffer,sizeof(buffer)-1);
-            buffer[n-1]='\0';
+            i32 n;
+
+            while((n=read(pipefd[0],buffer,sizeof(buffer)-1))>0){
+
+                  for(i32 i=0;i<n;i++){
+                        if(buffer[i]=='\n'){
+
+                              line[line_len]='\0';
+                              if(line_len>0){
+                                    matches[matches_count++]=strdup(line);
+                              }
+                              line_len=0;
+
+                        
+                        }else{
+                              line[line_len++]=buffer[i];
+                        }
+                  }
+
+                   
+
+            }
+
+            if(n>0){
+                  line[line_len]='\0';
+                  matches[matches_count]=strdup(line);
+            }
+
+          
+
+            
           
             
             close(pipefd[0]);
             waitpid(pid,NULL,0);
 
-              if(n>0){
-               return strdup(buffer);
-            }
-
-            
+                 
       }
 
-      return NULL;
+      return matches_count;
 
 }
 

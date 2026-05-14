@@ -181,13 +181,13 @@ void parse_commands(){
 
       static i32 tab_count=0;
     //   i8 last_buffer[MAX_BUFFER_SIZE]={0};
-      bool printed_something=false;
+      
 
       
     
       while(true){
 
-         printed_something=false;
+        
 
          InputBuffer *buffer=malloc(sizeof(InputBuffer));
          if(!buffer){
@@ -274,6 +274,10 @@ void parse_commands(){
                                 i32 len=last_space-(previous_space+1);
                                 strncpy(previous_word,previous_space+1,len);
                                 previous_word[len]='\0';
+                             }else{
+                                 i32 len=last_space-buffer->input;
+                                 strncpy(previous_word,buffer->input,len);
+                                 previous_word[len]='\0';
                              }
 
                              
@@ -282,22 +286,48 @@ void parse_commands(){
                               
                              
                              i8 *completion_line=strdup(buffer->input);
-                             i8 *match_=execute_completion_program(comp->completion_path,args,completion_line);
+                             i32 matches_count=execute_completion_program(comp->completion_path,args,completion_line,matches);
 
                              
                              
-                             if(match_){
-                                 
-                                 i8 *newline=strchr(match_,'\n');
-                                if(newline) *newline='\0';
-    
-                                 strcat(match_," ");
+                             if(matches_count>0){
+                                  
+                                 if(tab_count==1){
+                                     if(matches_count==1){
 
-                               
+                                        if(matches[0]!=NULL){
+                                             strcpy(last_space+1,matches[0]);
+                                             strcat(buffer->input," ");
+                                             len=strlen(buffer->input);
+                                        }
+                                         
+                                     }else{
+                                          printf("\a");
+                                          continue;
+                                     }
+                                     
+                                 }
 
-                                 strcpy(last_space+1,match_);
-                                 len=strlen(buffer->input);
-                                 free(match_);
+                                 if(tab_count>=2){
+
+                                    qsort(matches,matches_count,sizeof(i8 *),comparator);
+
+                                    printf("\n");
+
+                                    for(i32 i=0;i<matches_count;i++){
+                                          printf("%s",matches[i]);
+                                          if(i!=matches_count-1){
+                                                 printf("  ");
+                                          }
+
+                                          free(matches[i]);
+                                    }
+
+                                    printf("\n");
+                                      
+                                 }
+                                
+
                              }else{
                                 printf("\a");
                                 fflush(stdout);
@@ -456,8 +486,7 @@ void parse_commands(){
                                                     free(matches[i]);
                                             }
                                                 
-                                                // printed_something=true;
-
+                                               
                                                 printf("\n");
                                         
                                     }

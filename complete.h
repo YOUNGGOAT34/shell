@@ -16,7 +16,7 @@ typedef struct completion{
 
 void complete(i8 *args[],u32 args_size);
 bool execute_completion_script(i8 *completion_name,completion *comple);
-i8 *execute_completion_program(i8 *path,i8 *args[],i8 *completion_line);
+i32 execute_completion_program(i8 *path,i8 *args[],i8 *completion_line,i8 *matches[]);
 
 
 #endif
