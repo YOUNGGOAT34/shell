@@ -612,6 +612,10 @@ void parse_commands(){
               complete(args,args_size);
                  
 
+         }else if(strcmp(command,"jobs")==0){
+
+             
+
          }else{
             execute_program(command,args,redirect);
             

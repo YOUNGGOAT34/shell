@@ -4,8 +4,8 @@
 void type_command(i8 * path_env,i8 *cmd){
 
      //process inbuilt commands
-      i8 *inbuilts[]={"exit","echo","type","pwd","complete"};
-      i32 n=5;
+      i8 *inbuilts[]={"exit","echo","type","pwd","complete","jobs"};
+      i32 n=6;
 
       for(i32 i=0;i<n;i++){
          if(strcmp(cmd,inbuilts[i])==0){
