@@ -126,6 +126,11 @@ void parse_arguments(i8 *input,i8 *args[],Redirect *redirect,bool *background_jo
             }
 
 
+            if(c=='|'){
+                 redirect->pipe=true;
+            }
+
+
             if(c=='\'' && !in_double_qoutes){
                 in_single_quotes=!in_single_quotes;
                 continue;
@@ -581,6 +586,7 @@ void parse_commands(){
          redirect->stdout_file=NULL;
          redirect->redirect_flag=false;
          redirect->append=false;
+         redirect->pipe=false;
 
          bool background_job=false;
 
@@ -606,6 +612,18 @@ void parse_commands(){
 
          if(background_job){
               create_background_job(buffer->input,args);
+              free(buffer->input);
+              free(buffer);
+              free(redirect);
+              continue;
+         }
+
+
+         if(redirect->pipe){
+              pipeline(args);
+              free(buffer->input);
+              free(buffer);
+              free(redirect);
               continue;
          }
           

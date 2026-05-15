@@ -9,6 +9,7 @@
 #include "cd.h"
 #include "complete.h"
 #include "jobs.h"
+#include "pipe.h"
 
 
 
