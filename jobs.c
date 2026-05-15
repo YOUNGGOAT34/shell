@@ -61,7 +61,7 @@ void reap_job(i32 index){
 
 
 void show_jobs(){
-      for(i32 i=0;i<current_job_index;i++){
+      for(i32 i=0;i<current_job_index;){
 
 
            i32 status;
@@ -104,6 +104,8 @@ void show_jobs(){
 
            if(result>0 && WIFEXITED(status)){
                reap_job(i);
+           }else{
+              i++;
            }
       }
 }
