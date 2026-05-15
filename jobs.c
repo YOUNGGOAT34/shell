@@ -55,7 +55,6 @@ void reap_job(i32 index){
          jobs[i]=jobs[i+1];
 
      }
-
      current_job_index--;
 }
 
@@ -107,5 +106,64 @@ void show_jobs(){
            }else{
               i++;
            }
+      }
+}
+
+
+void reap_done_jobs_before_next_prompt(){
+      for(i32 i=0;i<current_job_index;){
+
+          i32 status;
+
+          pid_t result=waitpid(jobs[i].pid,&status,WNOHANG);
+
+          if(result>0 && WIFEXITED(status)){
+               
+               jobs[i].status=DONE;
+
+               i32 command_len=strlen(jobs[i].command);
+
+               while(command_len>0 && (jobs[i].command[command_len-1]=='&' || jobs[i].command[command_len-1]==' ')){
+                   jobs[i].command[--command_len]='\0';
+               }
+                
+           }
+
+
+           if(jobs[i].status==DONE){
+
+               i8 *status_str;
+               switch(jobs[i].status){
+                      case RUNNING:
+                           status_str="Running";
+                           break;
+                      case STOPPED:
+                           status_str="Stopped";
+                           break;
+                      case DONE:
+                           status_str="Done";
+                           break;      
+    
+               }
+
+               if(i==current_job_index-1){
+
+                        printf("[%d]+ %-24s  %s\n",jobs[i].job_number,status_str,jobs[i].command);
+                }else if(i==current_job_index-2){
+                        printf("[%d]- %-24s  %s\n",jobs[i].job_number,status_str,jobs[i].command);
+                }else{
+                        printf("[%d]  %-24s  %s\n",jobs[i].job_number,status_str,jobs[i].command);
+                }
+           }
+
+           if(result>0 && WIFEXITED(status)){
+               reap_job(i);
+           }else{
+              i++;
+           }
+
+
+           
+
       }
 }

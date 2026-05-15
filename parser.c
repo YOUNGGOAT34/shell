@@ -209,11 +209,12 @@ void parse_commands(){
         //  i8 *cwd=getcwd(NULL,0);
         //  i8 *home=getenv("HOME");
 
+        
+        reap_done_jobs_before_next_prompt();
+
         fflush(stdout);
         fflush(stderr);
-
         
-
          printf("$ ");
 
         //  if(cwd==NULL){
