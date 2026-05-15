@@ -7,10 +7,39 @@
 i32 job_number=0;
 i32 current_job_index=0;
 
+
 Job jobs[256];
+i32 free_job_number[256];
+i32 free_job_number_count;
 
 
 
+
+
+
+i32 get_job_number(){
+
+    if(free_job_number_count>0){
+         
+          i32 min_index=0;
+          for(i32 i=0;i<free_job_number_count;i++){
+             if(free_job_number[i]<free_job_number[min_index]){
+                 min_index=i;
+             }
+          }
+
+          i32 job_number=free_job_number[min_index];
+          free_job_number[min_index]=free_job_number[--free_job_number_count];
+          return job_number;
+    }
+
+    return ++job_number;
+}
+
+
+void release_job_number(i32 job_number){
+      free_job_number[free_job_number_count++]=job_number;
+}
 
 
 void create_background_job(i8 *full_command,i8 *args[]){
@@ -31,9 +60,9 @@ void create_background_job(i8 *full_command,i8 *args[]){
      }else{
 
 
-         job_number++;
+         i32 jn=get_job_number();
 
-         jobs[current_job_index].job_number=job_number;
+         jobs[current_job_index].job_number=jn;
          jobs[current_job_index].command=strdup(full_command);
          jobs[current_job_index].status=RUNNING;
          jobs[current_job_index].pid=pid;
@@ -51,10 +80,12 @@ void create_background_job(i8 *full_command,i8 *args[]){
 
 void reap_job(i32 index){
      free(jobs[index].command);
+     release_job_number(jobs[index].job_number);
      for(i32 i=index;i<current_job_index;i++){
          jobs[i]=jobs[i+1];
 
      }
+     
      current_job_index--;
 }
 
