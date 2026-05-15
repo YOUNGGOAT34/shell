@@ -13,6 +13,7 @@
 #include <dirent.h>
 
 
+
 typedef unsigned int u32;
 typedef int i32;
 typedef char i8;
@@ -41,5 +42,8 @@ typedef struct{
          bool directory_autocomplete;
          bool is_file;
 }AUTO;
+
+void run_builtin(i8 *args[]);
+bool is_builtin(i8 *command);
 
 #endif

@@ -6,6 +6,9 @@ void pipeline(i8 *args[]){
      i8 *args1[32];
      i8 *args2[32];
 
+     pid_t pid2=-1;
+     pid_t pid1=-1;
+
 
      i32 i;
      i32 args_index=0;
@@ -33,38 +36,75 @@ void pipeline(i8 *args[]){
 
      i32 pipefd[2];
      pipe(pipefd);
-     pid_t pid1=fork();
 
-     if(pid1==0){
+     if(is_builtin(args1[0])){
 
-      close(pipefd[0]);
-      dup2(pipefd[1],STDOUT_FILENO);
-      close(pipefd[1]);
-
-      execvp(args1[0],args1);
-      perror("execvp");
-      exit(EXIT_FAILURE);
-
-     }
-       
-     
-     pid_t pid2=fork();
-
-     if(pid2==0){
+        i32 saved_std=dup(STDOUT_FILENO);
+        dup2(pipefd[1],STDOUT_FILENO);
         close(pipefd[1]);
+        run_builtin(args1);
+        dup2(saved_std,STDOUT_FILENO);
+        close(saved_std);
+
+     }else{
+
+        pid1=fork();
+
+        if(pid1<0){
+          perror("fork");
+          exit(EXIT_FAILURE);
+        }
+   
+        if(pid1==0){
+   
+         close(pipefd[0]);
+         dup2(pipefd[1],STDOUT_FILENO);
+         close(pipefd[1]);
+   
+         execvp(args1[0],args1);
+         perror("execvp");
+         exit(EXIT_FAILURE);
+   
+        }
+
+        close(pipefd[1]);
+     }
+
+
+     if(is_builtin(args2[0])){
+
+        i32 saved_std=dup(STDIN_FILENO);
         dup2(pipefd[0],STDIN_FILENO);
         close(pipefd[0]);
-        execvp(args2[0],args2);
-        perror("execvp");
-        exit(EXIT_FAILURE);
+        run_builtin(args2);
+        dup2(saved_std,STDIN_FILENO);
+        close(saved_std);
+        
+     }else{
+
+        pid2=fork();
+
+        if(pid2<0){
+            perror("fork");
+            exit(EXIT_FAILURE);
+        }
+   
+        if(pid2==0){
+           close(pipefd[1]);
+           dup2(pipefd[0],STDIN_FILENO);
+           close(pipefd[0]);
+           execvp(args2[0],args2);
+           perror("execvp");
+           exit(EXIT_FAILURE);
+        }
+
+        close(pipefd[0]);
      }
 
-
-      close(pipefd[0]);
-      close(pipefd[1]);
-      waitpid(pid2,NULL,0);
-   
-      waitpid(pid1,NULL,0);
+       
+     
+       if(pid1!=-1) waitpid(pid1,NULL,0);
+       if(pid2!=-1) waitpid(pid2,NULL,0);
 
 
 }
