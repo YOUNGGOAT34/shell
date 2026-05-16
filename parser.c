@@ -193,9 +193,11 @@ void parse_commands(){
 
 
       static i32 tab_count=0;
-    //   i8 last_buffer[MAX_BUFFER_SIZE]={0};
+    
       
 
+     i8 *hist[256];
+     i32 history_index=0;
       
     
       while(true){
@@ -564,7 +566,7 @@ void parse_commands(){
 
         disable_raw_mode(&original_termios);
        
-        //  fgets(buffer->input,MAX_BUFFER_SIZE,stdin);
+       
    
    
          buffer->size=strlen(buffer->input);
@@ -585,18 +587,46 @@ void parse_commands(){
          bool background_job=false;
 
 
+         
+
+
+
+         
          parse_arguments(buffer->input,args,redirect,&background_job);
 
+        
+           
+        hist[history_index++]=strdup(buffer->input);
+
+         
+          
 
          u32 args_size=sizeof(args)/sizeof(args[0]);
 
-      
+
          i8 *command=args[0];
 
          if(command==NULL){
              free(buffer->input);
              free(buffer);
              continue;
+         }
+         
+
+         if(is_builtin(command) && strcmp(command,"echo")!=0){
+            if(strcmp(command,"complete")==0){
+                complete(args,args_size);
+            }else if(strcmp(command,"history")==0){
+                 history(hist,&history_index);
+            }else if(strcmp(command,"exit")==0){
+                break;
+            }
+            else{
+
+                run_builtin(args);
+            }
+            continue;
+
          }
 
          if(background_job){
@@ -605,53 +635,13 @@ void parse_commands(){
               free(buffer);
               free(redirect);
               continue;
-         }
-
-
-         if(redirect->pipe>0){
+         }else if(redirect->pipe>0){
               
               pipeline(args,redirect->pipe);
               free(buffer->input);
               free(buffer);
               free(redirect);
               continue;
-         }
-          
-   
-        if(strcmp(command,"exit")==0){
-            free(buffer->input);
-            free(buffer);
-            break;
-         
-         }else if(strcmp("type",command)==0){
-              
-           
-              i8 *cmd=args[1];
-              if(cmd==NULL){
-                 fprintf(stderr,"type: missing argument\n");
-                 free(buffer->input);
-                 free(buffer);
-                 continue;
-              }
-              type_command(getenv("PATH"),cmd);
-              
-         }else if(strcmp("pwd",command)==0){
-
-            pwd();
-
-         }else if(strcmp("cd",command)==0){
-                 change_directory(args[1]);
-         }else if(strcmp("complete",command)==0){
-
-              
-              complete(args,args_size);
-                 
-
-         }else if(strcmp(command,"jobs")==0){
-                 
-             show_jobs();
-              
-
          }else{
             execute_program(command,args,redirect);
             

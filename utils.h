@@ -31,7 +31,7 @@ typedef struct {
     i8 *stderr_file;
     bool redirect_flag;
     bool append;
-    bool pipe;
+    i32 pipe;
 
 }Redirect;
 

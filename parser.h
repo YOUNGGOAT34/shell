@@ -10,7 +10,7 @@
 #include "complete.h"
 #include "jobs.h"
 #include "pipe.h"
-
+#include "history.h"
 
 
 
