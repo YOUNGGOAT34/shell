@@ -1,110 +1,110 @@
 #include "pipe.h"
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <unistd.h>
 
-void pipeline(i8 *args[]){
-     i8 *args1[32];
-     i8 *args2[32];
+void pipeline(i8 *args[],i32 pipe_count){
 
-     pid_t pid2=-1;
-     pid_t pid1=-1;
-
-
-     i32 i;
-     i32 args_index=0;
-
-     for(i=0;args[i]!=NULL;i++){
-         if(strcmp(args[i],"|")==0){
-            i++;
-            break;
-         }
-
-         args1[args_index++]=strdup(args[i]);
-     }
-
-     args1[args_index]=NULL;
-
-     args_index=0;
-
-     for(i32 j=i;args[j]!=NULL;j++){
-        
-      args2[args_index++]=strdup(args[j]);
-     }
-
-     args2[args_index]=NULL;
-
-
-     i32 pipefd[2];
-     pipe(pipefd);
-
-     if(is_builtin(args1[0])){
-
-        i32 saved_std=dup(STDOUT_FILENO);
-        dup2(pipefd[1],STDOUT_FILENO);
-        close(pipefd[1]);
-        run_builtin(args1);
-        dup2(saved_std,STDOUT_FILENO);
-        close(saved_std);
-
-     }else{
-
-        pid1=fork();
-
-        if(pid1<0){
-          perror("fork");
-          exit(EXIT_FAILURE);
-        }
-   
-        if(pid1==0){
-   
-         close(pipefd[0]);
-         dup2(pipefd[1],STDOUT_FILENO);
-         close(pipefd[1]);
-   
-         execvp(args1[0],args1);
-         perror("execvp");
-         exit(EXIT_FAILURE);
-   
-        }
-
-        close(pipefd[1]);
-     }
-
-
-     if(is_builtin(args2[0])){
-
-        i32 saved_std=dup(STDIN_FILENO);
-        dup2(pipefd[0],STDIN_FILENO);
-        close(pipefd[0]);
-        run_builtin(args2);
-        dup2(saved_std,STDIN_FILENO);
-        close(saved_std);
-        
-     }else{
-
-        pid2=fork();
-
-        if(pid2<0){
-            perror("fork");
-            exit(EXIT_FAILURE);
-        }
-   
-        if(pid2==0){
-           close(pipefd[1]);
-           dup2(pipefd[0],STDIN_FILENO);
-           close(pipefd[0]);
-           execvp(args2[0],args2);
-           perror("execvp");
-           exit(EXIT_FAILURE);
-        }
-
-        close(pipefd[0]);
-     }
-
-       
+      
      
-       if(pid1!=-1) waitpid(pid1,NULL,0);
-       if(pid2!=-1) waitpid(pid2,NULL,0);
+
+     i8 *args_array[pipe_count+1][32];
+
+     pid_t pids[pipe_count+1];
+
+     for(i32 i=0;i<=pipe_count;i++){
+          pids[i]=-1;
+     }
+
+
+
+     i32 index=0;
+     i32 j=0;
+
+     
+
+     for(i32 i=0;i<pipe_count+1;i++){
+            
+            while(args[index]!=NULL && strcmp(args[index],"|")!=0){
+               
+                 
+                 args_array[i][j++]=strdup(args[index++]);    
+            }
+
+   
+            args_array[i][j]=NULL;
+            
+            if(args[index]!=NULL) index++;
+
+            j=0;
+
+     }
+
+     
+
+     i32 pipefd[pipe_count][2];
+
+     for(i32 i=0;i<pipe_count;i++){
+          pipe(pipefd[i]);
+     }
+
+    
+     for(i32 i=0;i<=pipe_count;i++){
+
+         
+               pids[i]=fork();
+
+               if(pids[i]<0){
+                  perror("fork");
+                  exit(EXIT_FAILURE);
+               }
+            
+               if(pids[i]==0){
+
+  
+                  if(i>0) dup2(pipefd[i-1][0],STDIN_FILENO);
+                  if(i<pipe_count) dup2(pipefd[i][1],STDOUT_FILENO);
+
+
+                   for(i32 k=0;k<pipe_count;k++){
+                      close(pipefd[k][0]);
+                      close(pipefd[k][1]);
+                  }
+
+                   if(is_builtin(args_array[i][0])){
+            
+                     
+                     if(i>0) dup2(pipefd[i-1][0],STDIN_FILENO);
+                     if(i<pipe_count) dup2(pipefd[i][1], STDOUT_FILENO);
+                     
+                     run_builtin(args_array[i]);
+                     exit(0);
+                     
+                  }else{
+
+
+                 
+                
+            
+                  execvp(args_array[i][0],args_array[i]);
+                  perror("execvp");
+                  exit(EXIT_FAILURE);
+                  
+               }
+
+                }
+
+               if(i>0) close(pipefd[i-1][0]);
+
+               if(i<pipe_count) close(pipefd[i][1]);
+  
+     }
+
+     
+
+     for(i32 i=0;i<=pipe_count;i++){
+          if(pids[i]!=-1) waitpid(pids[i],NULL,0);
+     }
 
 
 }

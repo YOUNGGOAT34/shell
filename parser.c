@@ -127,7 +127,7 @@ void parse_arguments(i8 *input,i8 *args[],Redirect *redirect,bool *background_jo
 
 
             if(c=='|'){
-                 redirect->pipe=true;
+                 redirect->pipe++;
             }
 
 
@@ -345,8 +345,6 @@ void parse_commands(){
 
                                  if(tab_count>=2){
 
-
-
                                     if(lcp_length>current_word_len){
 
                                               strncpy(current_word,matches[0],lcp_length);
@@ -371,10 +369,6 @@ void parse_commands(){
     
                                         printf("\n");
                                     }
-
-
-                                    
-
                                       
                                  }
                                 
@@ -586,7 +580,7 @@ void parse_commands(){
          redirect->stdout_file=NULL;
          redirect->redirect_flag=false;
          redirect->append=false;
-         redirect->pipe=false;
+         redirect->pipe=0;
 
          bool background_job=false;
 
@@ -599,11 +593,6 @@ void parse_commands(){
       
          i8 *command=args[0];
 
-         
-
-         
-
-         
          if(command==NULL){
              free(buffer->input);
              free(buffer);
@@ -619,8 +608,9 @@ void parse_commands(){
          }
 
 
-         if(redirect->pipe){
-              pipeline(args);
+         if(redirect->pipe>0){
+              
+              pipeline(args,redirect->pipe);
               free(buffer->input);
               free(buffer);
               free(redirect);
@@ -653,7 +643,7 @@ void parse_commands(){
                  change_directory(args[1]);
          }else if(strcmp("complete",command)==0){
 
-             
+              
               complete(args,args_size);
                  
 
