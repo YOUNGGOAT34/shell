@@ -611,13 +611,18 @@ void parse_commands(){
              free(buffer);
              continue;
          }
-         
 
          if(is_builtin(command) && strcmp(command,"echo")!=0){
             if(strcmp(command,"complete")==0){
                 complete(args,args_size);
             }else if(strcmp(command,"history")==0){
-                 history(hist,&history_index);
+                 if(args[1]==NULL){
+                      
+                     history(hist,&history_index,0);
+                 }else{
+                       history(hist,&history_index,(int)strtol(args[1],NULL,10));
+                 }
+                 
             }else if(strcmp(command,"exit")==0){
                 break;
             }

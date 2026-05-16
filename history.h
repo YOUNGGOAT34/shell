@@ -2,5 +2,5 @@
 #define HISTORY_H
 #include "utils.h"
 
-void history(i8 *hist[],i32 *size);
+void history(i8 *hist[],i32 *size,i32 n);
 #endif
