@@ -193,6 +193,7 @@ void parse_commands(){
 
 
       static i32 tab_count=0;
+      static i32 up_arrow_count=0;
     
       
 
@@ -201,6 +202,8 @@ void parse_commands(){
       
     
       while(true){
+
+        i32 current_history_index=history_index;
 
         
 
@@ -540,7 +543,31 @@ void parse_commands(){
                       }      
                   
              }
+             
  
+             }else if(c=='\033'){
+
+                 i8 sequence[3];
+
+                 read(STDIN_FILENO,&sequence[0],1);
+                 read(STDIN_FILENO,&sequence[1],1);
+
+                 sequence[2]='\0';
+
+                 if(strcmp(sequence,"[A")==0){
+                       if(current_history_index>0){
+                           current_history_index--;
+                          
+                           buffer->input=strdup(hist[current_history_index]);
+                           len=strlen(buffer->input);
+                           
+                       }
+                      
+                 }
+                  
+
+                  
+                 
              }else{
 
                     tab_count=0;
