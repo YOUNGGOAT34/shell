@@ -55,9 +55,10 @@ void disable_raw_mode(struct termios *original_termios){
 
 }
 
-void parse_arguments(i8 *input,i8 *args[],Redirect *redirect,bool *background_job){
+i32 parse_arguments(i8 *input,i8 *args[],Redirect *redirect,bool *background_job){
 
-          
+        
+
          i8 *current_arg=malloc(1024);
          int i=0;//keep track of args index
          int j=0;//keep track of current arg index
@@ -178,7 +179,7 @@ void parse_arguments(i8 *input,i8 *args[],Redirect *redirect,bool *background_jo
 
          free(current_arg);
 
-         return;
+         return i;
 
 
 }
@@ -557,12 +558,24 @@ void parse_commands(){
                  if(strcmp(sequence,"[A")==0){
                        if(current_history_index>0){
                            current_history_index--;
-                          
+                           
+                          free(buffer->input);
                            buffer->input=strdup(hist[current_history_index]);
+
                            len=strlen(buffer->input);
                            
                        }
                       
+                 }else if(strcmp(sequence,"[B")==0){
+                       if(current_history_index<history_index-1){
+    
+                         current_history_index++;
+
+                          free(buffer->input);
+                          buffer->input=strdup(hist[current_history_index]);
+                          len=strlen(buffer->input);
+                         
+                       }
                  }
                   
 
@@ -614,23 +627,16 @@ void parse_commands(){
          bool background_job=false;
 
 
-         
-
-
-
-         
-         parse_arguments(buffer->input,args,redirect,&background_job);
-
         
-           
+
+         
+
+         u32 args_size=parse_arguments(buffer->input,args,redirect,&background_job);
         hist[history_index++]=strdup(buffer->input);
 
          
           
-
-         u32 args_size=sizeof(args)/sizeof(args[0]);
-
-
+    
          i8 *command=args[0];
 
          if(command==NULL){
@@ -644,10 +650,12 @@ void parse_commands(){
                 complete(args,args_size);
             }else if(strcmp(command,"history")==0){
                  if(args[1]==NULL){
+
+                   
                       
-                     history(hist,&history_index,0);
+                     history(hist,&history_index,0,args_size,args);
                  }else{
-                       history(hist,&history_index,(int)strtol(args[1],NULL,10));
+                       history(hist,&history_index,(int)strtol(args[1],NULL,10),args_size,args);
                  }
                  
             }else if(strcmp(command,"exit")==0){
