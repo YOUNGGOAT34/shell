@@ -11,6 +11,7 @@
 #include "jobs.h"
 #include "pipe.h"
 #include "history.h"
+#include "declare.h"
 
 
 

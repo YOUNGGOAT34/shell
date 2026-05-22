@@ -14,7 +14,8 @@ bool is_builtin(i8 *command){
             strcmp(command,"pwd")==0  ||
             strcmp(command,"jobs")==0 ||
             strcmp(command,"history")==0 ||
-            strcmp(command,"complete")==0;
+            strcmp(command,"complete")==0 ||
+            strcmp(command,"declare")==0;
 
 }
 

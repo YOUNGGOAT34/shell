@@ -45,7 +45,7 @@ void write_history_to_file_on_exit(i8 *hist[],i32 *size){
         return;
     }
     
-    FILE *file=fopen(histfile,"w");
+    FILE *file=fopen(histfile,"a");
     if(file==NULL){
         perror("Error opening file");
         exit(EXIT_FAILURE);
