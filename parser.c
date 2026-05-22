@@ -663,6 +663,7 @@ void parse_commands(){
                  }
                  
             }else if(strcmp(command,"exit")==0){
+                write_history_to_file_on_exit(hist,&history_index);
                 break;
             }
             else{

@@ -38,6 +38,28 @@ void load_history_from_file_on_start_up(i8 *hist[],i32 *size){
          
 }
 
+
+void write_history_to_file_on_exit(i8 *hist[],i32 *size){
+    i8 *histfile=getenv("HISTFILE");
+    if(histfile==NULL){
+        return;
+    }
+    
+    FILE *file=fopen(histfile,"w");
+    if(file==NULL){
+        perror("Error opening file");
+        exit(EXIT_FAILURE);
+    }
+
+            
+    for(i32 i=0;i<*size;i++){
+        fprintf(file,"%s\n",hist[i]);
+    }
+
+    fclose(file);
+     
+}
+
 void history(i8 *hist[],i32 *size,i32 n,i32 args_size,i8 *args[]){
 
     
