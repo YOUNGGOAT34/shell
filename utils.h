@@ -11,6 +11,7 @@
 #include<stdlib.h>
 #include <termios.h>
 #include <dirent.h>
+#include <ctype.h>
 
 
 
