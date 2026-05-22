@@ -52,6 +52,22 @@ variable *search_variable(i8 *variable_name){
 
 
 
+i8  *expand_parameter(i8 *variable_name){
+
+   
+
+   variable *var=search_variable(variable_name);
+   if(var){
+       return strdup(var->variable_value);
+   }else{
+        return strdup("");
+   }
+
+   
+}
+
+
+
 
 void declare(i8 *args[],i32 args_size){
     if(args_size<2){
@@ -76,7 +92,7 @@ void declare(i8 *args[],i32 args_size){
             printf("declare: %s: not found\n",args[2]);
          }
 
-        
+         
     }else{
           
            if(args[1][0]!='\0' && (isdigit((u8)args[1][0])) || strchr(args[1],'-')){

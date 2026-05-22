@@ -1,14 +1,4 @@
-
-history -a hist.txt
-history -a hist.txt
-history
-history -a hist.txt
-echo hey
-echo I
-history -a hist.txt
-history -a hist.txt
-echo yoooh
-history -a hist.txt
-
-echo fuck you
-history -a hist.txt
+declare Banana_8=apple
+declare Pineapple_9=blueberry
+echo $Banana_8 pear_$Pineapple_9
+history -w hist.txt

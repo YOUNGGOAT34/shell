@@ -62,7 +62,6 @@ i32 parse_arguments(i8 *input,i8 *args[],Redirect *redirect,bool *background_job
          i8 *current_arg=malloc(1024);
          int i=0;//keep track of args index
          int j=0;//keep track of current arg index
-         
 
          bool in_single_quotes=false;
          bool in_double_qoutes=false;
@@ -159,9 +158,34 @@ i32 parse_arguments(i8 *input,i8 *args[],Redirect *redirect,bool *background_job
                 if(j>0){
 
                    current_arg[j]='\0';
-                   args[i++]=strdup(current_arg);
-                   j=0;
+                  
+                
+                   i8 *$=strchr(current_arg,'$');
+
+        
+              if($){
+                    
+                
+                    i8 *buffer=expand_parameter($+1);
+                    
+                    if(buffer!=NULL) {
+                      
+                        strcpy($,buffer);
+                        
+                    }
+
+                    
+                    current_arg[strlen(current_arg)]='\0';
+                  
+                    
+                }else{
+                    current_arg[j]='\0';
                 }
+
+                      args[i++]=strdup(current_arg);
+                       j=0;
+                }
+               
             }else{
 
                current_arg[j++]=c;
@@ -171,8 +195,43 @@ i32 parse_arguments(i8 *input,i8 *args[],Redirect *redirect,bool *background_job
          }
 
          if(j>0){
-             current_arg[j]='\0';
-             args[i++]=strdup(current_arg);
+
+
+            current_arg[j]='\0';
+             
+              
+             i8 *$=strchr(current_arg,'$');
+
+        
+              if($){
+
+                    
+                      
+                    
+                      
+                    i8 *buffer=expand_parameter($+1);
+                   
+                    
+                    if(buffer!=NULL) {
+
+                      
+                        strcpy($,buffer);
+                       
+                        
+                      
+                    }
+
+                    
+                    current_arg[strlen(current_arg)]='\0';
+                  
+                    
+                }else{
+                    current_arg[j]='\0';
+                }
+
+                args[i++]=strdup(current_arg);
+                j=0;
+                
          }
 
          args[i]=NULL;
@@ -633,16 +692,7 @@ void parse_commands(){
 
          u32 args_size=parse_arguments(buffer->input,args,redirect,&background_job);
 
-        
-           
         hist[history_index++]=strdup(buffer->input);
-
-         
-          
-          
-       
-
-        
 
          i8 *command=args[0];
 
