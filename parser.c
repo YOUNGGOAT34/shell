@@ -194,9 +194,12 @@ void parse_commands(){
 
 
       static i32 tab_count=0;
+     
       
      i8 *hist[256];
      i32 history_index=0;
+
+     load_history_from_file_on_start_up(hist,&history_index);
       
     
       while(true){
@@ -629,11 +632,18 @@ void parse_commands(){
          
 
          u32 args_size=parse_arguments(buffer->input,args,redirect,&background_job);
+
+        
+           
         hist[history_index++]=strdup(buffer->input);
 
          
           
-    
+          
+       
+
+        
+
          i8 *command=args[0];
 
          if(command==NULL){
@@ -647,9 +657,6 @@ void parse_commands(){
                 complete(args,args_size);
             }else if(strcmp(command,"history")==0){
                  if(args[1]==NULL){
-
-                   
-                      
                      history(hist,&history_index,0,args_size,args);
                  }else{
                        history(hist,&history_index,(int)strtol(args[1],NULL,10),args_size,args);

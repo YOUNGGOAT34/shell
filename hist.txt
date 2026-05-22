@@ -1,6 +1,14 @@
-echo hello
+
+history -a hist.txt
+history -a hist.txt
+history
+history -a hist.txt
 echo hey
-echo hi
-echo wasap
-echo holla
-history -w hist.txt
+echo I
+history -a hist.txt
+history -a hist.txt
+echo yoooh
+history -a hist.txt
+
+echo fuck you
+history -a hist.txt
