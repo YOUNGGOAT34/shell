@@ -32,7 +32,28 @@ void history(i8 *hist[],i32 *size,i32 n,i32 args_size,i8 *args[]){
               }
 
               *size=index;
-        }else{
+              fclose(file);
+        }else if(strcmp(args[1],"-w")==0){
+
+            FILE *file=fopen(args[2],"w");
+              if(file==NULL){
+                perror("Error opening file");
+                exit(EXIT_FAILURE);
+              }
+
+              
+              for(i32 i=0;i<*size;i++){
+                   i8 *history=strdup(hist[i]);
+                   strcat(history,"\n");
+                   fputs(history,file);
+                   free(history);
+              }
+
+              fclose(file);
+
+
+              
+        } else{
 
             if(n>0){
                     for(i32 i=*size-n;i<*size;i++){

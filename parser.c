@@ -194,10 +194,7 @@ void parse_commands(){
 
 
       static i32 tab_count=0;
-      static i32 up_arrow_count=0;
-    
       
-
      i8 *hist[256];
      i32 history_index=0;
       
