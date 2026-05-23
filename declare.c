@@ -95,7 +95,7 @@ void declare(i8 *args[],i32 args_size){
          
     }else{
           
-           if(args[1][0]!='\0' && (isdigit((u8)args[1][0])) || strchr(args[1],'-')){
+           if((args[1][0]!='\0' && (isdigit((u8)args[1][0])) || strchr(args[1],'-'))){
 
                    printf("declare: `%s': not a valid identifier\n",args[1]);
  
