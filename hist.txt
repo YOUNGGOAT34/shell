@@ -1,4 +1,0 @@
-declare Banana_8=apple
-declare Pineapple_9=blueberry
-echo $Banana_8 pear_$Pineapple_9
-history -w hist.txt
