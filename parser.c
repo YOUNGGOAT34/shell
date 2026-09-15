@@ -227,8 +227,8 @@ i32 parse_arguments(i8 *input,i8 *args[],Redirect *redirect,bool *background_job
 
 
 
-static void raw_mode(i8 *input_buffer,i8 *hist[],i32 *history_index){
-        i32 len=0;
+static void raw_mode(i8 *input_buffer,i8 *hist[],i32 *history_index,const i8 *prompt){
+       i32 len=0;
        static i32 tab_count=0;
        i32 current_history_index=*history_index;
        struct termios original_termios;
@@ -359,7 +359,7 @@ static void raw_mode(i8 *input_buffer,i8 *hist[],i32 *history_index){
                               free(comp);
                               free(completion_line);
 
-                              printf("\r\033[K$ %s",input_buffer);
+                              printf("\r\033[K$ %s%s",prompt,input_buffer);
                               fflush(stdout);
                               continue;
 
@@ -519,7 +519,7 @@ static void raw_mode(i8 *input_buffer,i8 *hist[],i32 *history_index){
              }else if (c == 127 || c == '\b') {
                 if (len > 0) {
                     input_buffer[--len] = '\0';
-                    printf("\r\033[K$ %s", input_buffer);
+                    printf("\r\033[K$ %s%s", prompt,input_buffer);
                     fflush(stdout);
                 }
                 continue;
@@ -537,7 +537,7 @@ static void raw_mode(i8 *input_buffer,i8 *hist[],i32 *history_index){
                    
              }
   
-                    printf("\r\033[K$ %s",input_buffer);
+                    printf("\r\033[K$ %s%s",prompt,input_buffer);
                     fflush(stdout);
                 
         }
@@ -571,27 +571,32 @@ void parse_commands(){
          buffer->input=malloc(MAX_BUFFER_SIZE);
          buffer->size=0;
 
-        //  i8 *cwd=getcwd(NULL,0);
-        //  i8 *home=getenv("HOME");
-        
+
         reap_done_jobs_before_next_prompt();
       
         fflush(stdout);
         fflush(stderr);
         
-         printf("$ ");
 
-        //  if(cwd==NULL){
-        //     printf("$ ");
-        //  } else if(cwd && home && strstr(cwd,home)==cwd){
-        //      printf("~%s$ ",cwd+strlen(home));
-        //  } else{
-        //        printf("%s$ ",cwd);
-        //  }
+
+        i8 prompt[512];
+        i8 *cwd = getcwd(NULL, 0);
+        i8 *home = getenv("HOME");
+
+        if(cwd == NULL){
+            snprintf(prompt, sizeof(prompt), "$ ");
+        } else if(home && strstr(cwd, home) == cwd){
+            snprintf(prompt, sizeof(prompt), "~%s$ ", cwd + strlen(home));
+        } else {
+            snprintf(prompt, sizeof(prompt), "%s$ ", cwd);
+        }
+
+        free(cwd);
+        printf("%s", prompt);
 
         buffer->input[0]='\0';
        
-        raw_mode(buffer->input,hist,&history_index);
+        raw_mode(buffer->input,hist,&history_index,prompt);
          buffer->size=strlen(buffer->input);
    
          if(buffer->size>0 && buffer->input[buffer->size-1]=='\n'){
