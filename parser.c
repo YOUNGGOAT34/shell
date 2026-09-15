@@ -3,8 +3,6 @@
 #include "jobs.h"
 
 
-
-
 i32 longest_common_prefix(i8 *matches[],i32 matches_count){
 
     i32 count=0;
@@ -33,13 +31,9 @@ int comparator(const void *a,const void *b){
 }
 
 
-
-
-
 void enable_raw_mode(struct termios *original_termios){
 
     struct termios raw;
-
 
     tcgetattr(STDIN_FILENO,original_termios);
     raw=*original_termios;
@@ -55,9 +49,36 @@ void disable_raw_mode(struct termios *original_termios){
 
 }
 
-i32 parse_arguments(i8 *input,i8 *args[],Redirect *redirect,bool *background_job){
 
-        
+static void expand_variable(i8 *current_arg) {
+    i8 *dollar = strchr(current_arg, '$');
+    if (!dollar) return;
+
+    i8 *start = strchr(current_arg, '{');
+    i8 *end   = strchr(current_arg, '}');
+
+    if (start && end && end > start) {
+        while ((dollar = strchr(current_arg, '$'))) {
+            start = strchr(current_arg, '{');
+            end   = strchr(current_arg, '}');
+            if (!start || !end || end <= start) break;
+
+            i8 var_name[50] = {0};
+            i8 temp[1024];
+            strncpy(var_name, start + 1, end - start - 1);
+            i8 *value = expand_parameter(var_name);
+            snprintf(temp, sizeof(temp), "%.*s%s%s",
+                     (i32)(dollar - current_arg),
+                     current_arg, value, end + 1);
+            strcpy(current_arg, temp);
+        }
+    } else {
+        i8 *value = expand_parameter(dollar + 1);
+        if (value) strcpy(dollar, value);
+    }
+}
+
+i32 parse_arguments(i8 *input,i8 *args[],Redirect *redirect,bool *background_job){
 
          i8 *current_arg=malloc(1024);
          int i=0;//keep track of args index
@@ -157,85 +178,13 @@ i32 parse_arguments(i8 *input,i8 *args[],Redirect *redirect,bool *background_job
             if(!in_single_quotes && !in_double_qoutes && c==' '){
                 if(j>0){
 
-                   current_arg[j]='\0';
-                  
-                
-                   i8 *$=strchr(current_arg,'$');
-
-                   
-
-        
-              if($){
-                    
-                
-                    i8 *start=strchr(current_arg,'{');
-
-                    i8 *end=strchr(current_arg,'}');
-
-                   
-                   if(start && end && end>start){
-                        while($){
-
-                            if($){
-
-                                if(start && end && end>start){
-
-                                    i8 var_name[50]={0}; 
-                                    i8 temp[1024];
-                                    strncpy(var_name,start+1,end-start-1);
-
-                                    i8 *buffer=expand_parameter(var_name);
-                                     
-                                    // printf("%s\n",end+1);
-    
-                                    snprintf(temp,sizeof(temp),"%.*s%s%s",(i32)($-current_arg),current_arg,buffer,end+1);
-                                    strcpy(current_arg,temp);
-
-                                    start=strchr(current_arg,'{');
-    
-                                    end=strchr(current_arg,'}');
-        
-                                     
-                                    
-                                }
-
-                                
-
-                            }
-
-                            $=strchr(current_arg,'$');
-
-                            
-                        }
-
-
-
-
-                      current_arg[strlen(current_arg)]='\0';
-
-                    }else{
-
-                           i8 *buffer=expand_parameter($+1);
-                     
-                    
-                            if(buffer!=NULL) {
-
-                                strcpy($,buffer);
-                            }
-
-                            
-                            current_arg[strlen(current_arg)]='\0';
-
-                    }
-
-                  
-                    
-                }else{
                     current_arg[j]='\0';
-                }
+                  
+                
+                    expand_variable(current_arg);
 
-                      args[i++]=strdup(current_arg);
-                       j=0;
+                    args[i++]=strdup(current_arg);
+                    j=0;
                 }
                
             }else{
@@ -247,98 +196,11 @@ i32 parse_arguments(i8 *input,i8 *args[],Redirect *redirect,bool *background_job
          }
 
          if(j>0){
-
-
             current_arg[j]='\0';
 
-             i8 *$=strchr(current_arg,'$');
-
-
-        
-              if($){
-
-                    
-
-
-                    i8 *start=strchr(current_arg,'{');
-
-                    i8 *end=strchr(current_arg,'}');
-
-                     
-
-                   
-                   if(start && end && end>start){
-                        while($){
-
-                           
-
-                            if($){
-
-
-                              
-                              
-                                
-
-                                
-
-                                if(start && end && end>start){
-
-                                    i8 var_name[50]={0}; 
-                                    i8 temp[1024];
-                                    strncpy(var_name,start+1,end-start-1);
-
-                                    i8 *buffer=expand_parameter(var_name);
-                                     
-                                    // printf("%s\n",end+1);
-    
-                                    snprintf(temp,sizeof(temp),"%.*s%s%s",(i32)($-current_arg),current_arg,buffer,end+1);
-                                    strcpy(current_arg,temp);
-
-                                    start=strchr(current_arg,'{');
-    
-                                    end=strchr(current_arg,'}');
-        
-                                     
-                                    
-                                }
-
-                                
-
-                            }
-
-                            $=strchr(current_arg,'$');
-
-                            
-                        }
-
-
-
-
-                      current_arg[strlen(current_arg)]='\0';
-
-                    }else{
-
-                           i8 *buffer=expand_parameter($+1);
-                     
-                    
-                            if(buffer!=NULL) {
-
-                                strcpy($,buffer);
-                            }
-
-                            
-                            current_arg[strlen(current_arg)]='\0';
-
-                    }
-
-
-                    
-                }else{
-                    current_arg[j]='\0';
-                }
-
-                args[i++]=strdup(current_arg);
-                j=0;
+            expand_variable(current_arg);
+            args[i++]=strdup(current_arg);
+            j=0;
                 
          }
 
@@ -768,6 +630,25 @@ void parse_commands(){
              free(buffer);
              continue;
          }
+
+
+        i8 *equals = strchr(command, '=');
+        if(equals != NULL && args[1] == NULL){
+            *equals = '\0';
+            i8 *name  = command;
+            i8 *value = equals + 1;
+
+            variable *var = malloc(sizeof(variable));
+            var->variable_name  = strdup(name);
+            var->variable_value = strdup(value);
+            var->next = NULL;
+            insert_variable(var);
+
+            free(buffer->input);
+            free(buffer);
+            free(redirect);
+            continue;
+        }
 
          if(is_builtin(command) && strcmp(command,"echo")!=0){
             if(strcmp(command,"complete")==0){

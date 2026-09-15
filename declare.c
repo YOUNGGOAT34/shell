@@ -52,18 +52,18 @@ variable *search_variable(i8 *variable_name){
 
 
 
-i8  *expand_parameter(i8 *variable_name){
-
-   
-
-   variable *var=search_variable(variable_name);
-   if(var){
-       return strdup(var->variable_value);
-   }else{
-        return strdup("");
-   }
-
-   
+i8 *expand_parameter(i8 *variable_name) {
+    variable *var = search_variable(variable_name);
+    if (var) {
+        return strdup(var->variable_value);
+    }
+    
+    i8 *env_value = getenv(variable_name);
+    if (env_value) {
+        return strdup(env_value);
+    }
+    
+    return strdup("");
 }
 
 
