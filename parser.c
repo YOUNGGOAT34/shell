@@ -515,8 +515,6 @@ static void raw_mode(i8 *input_buffer,i8 *hist[],i32 *history_index){
                        }
                  }
                   
-
-                  
                  
              }else if (c == 127 || c == '\b') {
                 if (len > 0) {
@@ -551,6 +549,11 @@ static void raw_mode(i8 *input_buffer,i8 *hist[],i32 *history_index){
 void parse_commands(){
 
      setbuf(stdout,NULL);
+     //signal handling
+     signal(SIGINT,  SIG_IGN);
+     signal(SIGTSTP, SIG_IGN);
+     signal(SIGCHLD, SIG_DFL); 
+
      i8 *hist[256];
      i32 history_index=0;
 

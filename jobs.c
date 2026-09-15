@@ -54,9 +54,12 @@ void create_background_job(i8 *full_command,i8 *args[]){
      }
 
      if(pid==0){
-         execvp(args[0],args);
-         perror("execv");
-         exit(EXIT_FAILURE);
+        signal(SIGINT,  SIG_DFL);
+        signal(SIGTSTP, SIG_DFL);
+        signal(SIGQUIT, SIG_DFL);
+        execvp(args[0],args);
+        perror("execv");
+        exit(EXIT_FAILURE);
      }else{
 
 
