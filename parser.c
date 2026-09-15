@@ -593,7 +593,7 @@ void parse_commands(){
 
         free(cwd);
         printf("%s", prompt);
-
+        
         buffer->input[0]='\0';
        
         raw_mode(buffer->input,hist,&history_index,prompt);

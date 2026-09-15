@@ -1,205 +1,139 @@
 #include "execute.h"
 
 
-void execute_program(i8 *command,i8 *args[],Redirect *redirect){
+static int setup_redirect(const char *file, int target_fd, bool append){
+    int flags = O_WRONLY | O_CREAT;
 
-    
-   //if the command contains / the shell shouldn't search it in PATH
+    flags |= append ? O_APPEND : O_TRUNC;
 
-   if(strchr(command,'/')){
+    int fd = open(file, flags, 0644);
+    if (fd < 0) {
+        perror(file);
+        return -1;
+    }
 
-      
-          pid_t pid=fork();
+    if (dup2(fd, target_fd) < 0) {
+        perror("dup2");
+        close(fd);
+        return -1;
+    }
 
+    close(fd);
+    return 0;
+}
 
-         if(pid<0){
-               perror("Fork failed");
-               return;
-         }
-   
-          if(pid==0){
+static int setup_redirections(const Redirect *redirect){
+    if (redirect == NULL)
+        return 0;
 
-            signal(SIGINT,  SIG_DFL);
-            signal(SIGTSTP, SIG_DFL);
-            signal(SIGQUIT, SIG_DFL);
-               
-              if(redirect->stdout_file!=NULL){
-                        if(redirect->append){
+    if (redirect->stdout_file != NULL) {
+        if (setup_redirect(
+                redirect->stdout_file,
+                STDOUT_FILENO,
+                redirect->append) < 0) {
+            return -1;
+        }
+    }
 
-                              i32 fd=open(redirect->stdout_file,O_WRONLY | O_CREAT | O_APPEND,0644);
-                              if(fd<0){
-                                     perror("open");
-                                     exit(1);
-                              }
+    if (redirect->stderr_file != NULL) {
+        if (setup_redirect(
+                redirect->stderr_file,
+                STDERR_FILENO,
+                redirect->append) < 0) {
+            return -1;
+        }
+    }
 
-                              dup2(fd,STDOUT_FILENO);
-                              close(fd);
-                              
+    return 0;
+}
 
-                        }else{
-                            
-                              i32 fd=open(redirect->stdout_file,O_WRONLY | O_CREAT | O_TRUNC,0644);
+static void reset_child_signals(void){
+    signal(SIGINT, SIG_DFL);
+    signal(SIGTSTP, SIG_DFL);
+    signal(SIGQUIT, SIG_DFL);
+}
 
-                              if(fd<0){
-                                    perror("open");
-                                    exit(1);
-                              }
+static void execute_path(const char *path, i8 *args[], Redirect *redirect){
+    pid_t pid = fork();
 
-                              dup2(fd,STDOUT_FILENO);
-                              close(fd);
-                        }
+    if (pid < 0) {
+        perror("fork");
+        return;
+    }
 
-              }
+    if (pid == 0) {
+        reset_child_signals();
 
-              if(redirect->stderr_file!=NULL){
+        if (setup_redirections(redirect) < 0)
+            _exit(1);
 
-                        if(redirect->append){
+        execv(path, args);
 
-                              i32 fd=open(redirect->stderr_file,O_WRONLY | O_CREAT | O_APPEND,0644);
-                              if(fd<0){
-                                    perror("open");
-                                    exit(1);
-                              }
-      
-                              dup2(fd,STDERR_FILENO);
-                              close(fd);
+        perror(path);
+        _exit(127);
+    }
 
-                        }else{
+    if (waitpid(pid, NULL, 0) < 0)
+        perror("waitpid");
+}
 
-                              i32 fd=open(redirect->stderr_file,O_WRONLY | O_CREAT | O_TRUNC,0644);
-                              if(fd<0){
-                                    perror("open");
-                                    exit(1);
-                              }
-      
-                              dup2(fd,STDERR_FILENO);
-                              close(fd);
-                        }
-              }
-                
-               
-               execv(command,args);
-               perror(command);
-               exit(1);
-          }else{
-             waitpid(pid,NULL,0);
-          }
-    
+void execute_program(i8 *command, i8 *args[], Redirect *redirect){
+    /*
+     * If command contains '/', execute it directly.
+     * Otherwise search for it in PATH.
+     */
+    if (strchr(command, '/') != NULL) {
+        execute_path(command, args, redirect);
+        return;
+    }
 
-      return;
-   }
+    char *path_env = getenv("PATH");
 
-   
-   //if the above case was false then the shelll has to search in PATH
+    if (path_env == NULL) {
+        fprintf(stderr, "%s: command not found\n", command);
+        return;
+    }
 
-   i8 *path_env=getenv("PATH");
-         i8 path_copy[1024];
-         if(!path_env){
+    /*
+     * strtok() modifies its input, so make a copy of PATH.
+     * PATH can theoretically be longer than 1024 bytes, so using
+     * strdup() avoids an arbitrary fixed-size limit.
+     */
+    char *path_copy = strdup(path_env);
 
-             fprintf(stderr,"Command not found\n");
-             return;
-             
-         }
-         strncpy(path_copy,path_env,sizeof(path_copy)-1);
-         path_copy[sizeof(path_copy)-1]='\0';
+    if (path_copy == NULL) {
+        perror("strdup");
+        return;
+    }
 
-         i8 *dir=strtok(path_copy,":");
-         while(dir!=NULL){
-              i8 full_path[255];
-              snprintf(full_path,sizeof(full_path),"%s/%s",dir,command);
+    char *dir = strtok(path_copy, ":");
 
+    while (dir != NULL) {
+        char full_path[PATH_MAX];
 
-            if(access(full_path,X_OK)==0){
+        int written = snprintf(
+            full_path,
+            sizeof(full_path),
+            "%s/%s",
+            *dir ? dir : ".",
+            command
+        );
 
-   
-               pid_t pid=fork();
+        if (written < 0 || (size_t)written >= sizeof(full_path)) {
+            dir = strtok(NULL, ":");
+            continue;
+        }
 
-               if(pid<0){
-                   perror("Fork failed");
-                   return;
-               }
-   
-               if(pid==0){ 
+        if (access(full_path, X_OK) == 0) {
+            execute_path(full_path, args, redirect);
+            free(path_copy);
+            return;
+        }
 
-                    signal(SIGINT,  SIG_DFL);
-                    signal(SIGTSTP, SIG_DFL);
-                    signal(SIGQUIT, SIG_DFL);
+        dir = strtok(NULL, ":");
+    }
 
-                     if(redirect->stdout_file!=NULL){
+    free(path_copy);
 
-                              if(redirect->append){
-
-                                    i32 fd=open(redirect->stdout_file,O_WRONLY | O_CREAT | O_APPEND,0644);
-      
-                                    if(fd<0){
-                                          perror("open");
-                                          exit(1);
-                                    }
-
-                                    dup2(fd,STDOUT_FILENO);
-                                    close(fd);
-
-
-                              }else{
-
-                                    i32 fd=open(redirect->stdout_file,O_WRONLY | O_CREAT | O_TRUNC,0644);
-      
-                                    if(fd<0){
-                                          perror("open");
-                                          exit(1);
-                                    }
-      
-                                    dup2(fd,STDOUT_FILENO);
-                                    close(fd);
-                              }
-                     }
-                     
-                     if(redirect->stderr_file!=NULL){
-
-                              if(redirect->append){
-                                    i32 fd=open(redirect->stderr_file,O_WRONLY | O_CREAT | O_APPEND,0644);
-      
-                                    if(fd<0){
-                                          perror("open");
-                                          exit(1);
-                                    }
-      
-                                    dup2(fd,STDERR_FILENO);
-                                    close(fd);
-
-                              }else{
-                                    i32 fd=open(redirect->stderr_file,O_WRONLY | O_CREAT | O_TRUNC,0644);
-      
-                                    if(fd<0){
-                                          perror("open");
-                                          exit(1);
-                                    }
-      
-                                    dup2(fd,STDERR_FILENO);
-                                    close(fd);
-
-                              }
-                            
-                       }
-
-                  execv(full_path,args);
-                  perror(command);
-                  exit(1);
-               }else{
-                     waitpid(pid,NULL,0);
-               }
-   
-   
-                  return;
-            }
-
-            dir=strtok(NULL,":");
-
-                        
-            }
-
-         if(dir==NULL){
-              printf("%s: command not found\n",command);
-         }
-
+    fprintf(stderr, "%s: command not found\n", command);
 }
