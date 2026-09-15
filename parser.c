@@ -50,6 +50,18 @@ void disable_raw_mode(struct termios *original_termios){
 }
 
 
+static void display_matches(i8 *matches[], i32 count) {
+    qsort(matches, count, sizeof(i8 *), comparator);
+    printf("\n");
+    for (i32 i = 0; i < count; i++) {
+        printf("%s", matches[i]);
+        if (i != count - 1) printf("  ");
+        free(matches[i]);
+    }
+    printf("\n");
+}
+
+
 static void expand_variable(i8 *current_arg) {
     i8 *dollar = strchr(current_arg, '$');
     if (!dollar) return;
@@ -323,20 +335,7 @@ static void raw_mode(i8 *input_buffer,i8 *hist[],i32 *history_index){
 
                                     }else{
 
-                                        qsort(matches,matches_count,sizeof(i8 *),comparator);
-
-                                        printf("\n");
-    
-                                        for(i32 i=0;i<matches_count;i++){
-                                              printf("%s",matches[i]);
-                                              if(i!=matches_count-1){
-                                                     printf("  ");
-                                              }
-    
-                                              free(matches[i]);
-                                        }
-    
-                                        printf("\n");
+                                        display_matches(matches,matches_count);
                                     }
                                       
                                  }
@@ -475,21 +474,8 @@ static void raw_mode(i8 *input_buffer,i8 *hist[],i32 *history_index){
                          
                                 }else{
                                             
-                                            qsort(matches,matches_count,sizeof(i8 *),comparator);
-                                            printf("\n");
-
-                                            for(i32 i=0;i<matches_count;i++){
-                                            
-                                                    printf("%s", matches[i]);
-                                                    if(i!=matches_count-1){
-                                                        printf("  ");
-                                                    }
-
-                                                    free(matches[i]);
-                                            }
-                                                
-                                               
-                                                printf("\n");
+                                           
+                                     display_matches(matches,matches_count);
                                         
                                     }
                       }      
