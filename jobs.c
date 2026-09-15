@@ -110,7 +110,7 @@ void show_jobs(){
                 
            }
            
-           i8 *status_str;
+           i8 *status_str=NULL;
            switch(jobs[i].status){
                   case RUNNING:
                        status_str="Running";

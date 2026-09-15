@@ -353,64 +353,12 @@ i32 parse_arguments(i8 *input,i8 *args[],Redirect *redirect,bool *background_job
 
 
 
-
-void parse_commands(){
-
-      setbuf(stdout,NULL);
-
-      struct termios original_termios;
-
-
-      static i32 tab_count=0;
-     
-      
-     i8 *hist[256];
-     i32 history_index=0;
-
-     load_history_from_file_on_start_up(hist,&history_index);
-      
-    
-      while(true){
-
-        i32 current_history_index=history_index;
-
-        
-
-         InputBuffer *buffer=malloc(sizeof(InputBuffer));
-         if(!buffer){
-             fprintf(stderr,"Failed to allocate memory for the input buffer (%s)\n",strerror(errno));
-             exit(EXIT_FAILURE);
-         }
-   
-         buffer->input=malloc(MAX_BUFFER_SIZE);
-         buffer->size=0;
-
-        //  i8 *cwd=getcwd(NULL,0);
-        //  i8 *home=getenv("HOME");
-
-        
-        reap_done_jobs_before_next_prompt();
-
-        fflush(stdout);
-        fflush(stderr);
-        
-         printf("$ ");
-
-        //  if(cwd==NULL){
-        //     printf("$ ");
-        //  } else if(cwd && home && strstr(cwd,home)==cwd){
-        //      printf("~%s$ ",cwd+strlen(home));
-        //  } else{
-        //        printf("%s$ ",cwd);
-        //  }
-
-
-        
-        
-
+static void raw_mode(i8 *input_buffer,i8 *hist[],i32 *history_index){
         i32 len=0;
-        buffer->input[0]='\0';
-        enable_raw_mode(&original_termios);
+       static i32 tab_count=0;
+       i32 current_history_index=*history_index;
+       struct termios original_termios;
+       enable_raw_mode(&original_termios);
         while(true){
              i8 c;
              i32 bytes_read=read(STDIN_FILENO,&c,1);
@@ -424,16 +372,12 @@ void parse_commands(){
                  break;
              }else if(c=='\t'){
 
-             
 
-
-             tab_count++;
+             (tab_count)++;
              i8 *matches[255];
 
-             i8 *last_space=strrchr(buffer->input,' ');
+             i8 *last_space=strrchr(input_buffer,' ');
              
-
-
              AUTO *auto_complete=malloc(sizeof(AUTO));
              auto_complete->search_in_current_dir=false;
              auto_complete->directory_autocomplete=false;
@@ -443,23 +387,15 @@ void parse_commands(){
              
 
              if(last_space!=NULL){
-
-                  
-
-                 
                  completion *comp=malloc(sizeof(completion));
-
-                 
-                 
-                 if(execute_completion_script(buffer->input,comp)){
+                 if(execute_completion_script(input_buffer,comp)){
                             
 
                              i8 *previous_space=last_space-1;
                              i8 previous_word[MAX_BUFFER_SIZE];
-
                              i8 *current_word=last_space+1;
 
-                             while(previous_space>buffer->input && *previous_space!=' '){
+                             while(previous_space>input_buffer && *previous_space!=' '){
                                   previous_space--;
                              }
 
@@ -468,25 +404,22 @@ void parse_commands(){
                                 strncpy(previous_word,previous_space+1,len);
                                 previous_word[len]='\0';
                              }else{
-                                 i32 len=last_space-buffer->input;
-                                 strncpy(previous_word,buffer->input,len);
+                                 i32 len=last_space-input_buffer;
+                                 strncpy(previous_word,input_buffer,len);
                                  previous_word[len]='\0';
                              }
 
                              
                              i8 *args[]={comp->completion_path,comp->completion_name,current_word,previous_word,NULL};
-        
-                              
                              
-                             i8 *completion_line=strdup(buffer->input);
+                             i8 *completion_line=strdup(input_buffer);
                              i32 matches_count=execute_completion_program(comp->completion_path,args,completion_line,matches);
 
                              
                              
                              if(matches_count>0){
 
-                                i8 *currrent_word=(last_space==NULL)?buffer->input:last_space+1;
-
+                                // i8 *currrent_word=(last_space==NULL)?input_buffer:last_space+1;
                                 i32 current_word_len=strlen(current_word);
                                 i32 lcp_length=longest_common_prefix(matches,matches_count);
 
@@ -496,8 +429,8 @@ void parse_commands(){
 
                                         if(matches[0]!=NULL){
                                              strcpy(last_space+1,matches[0]);
-                                             strcat(buffer->input," ");
-                                             len=strlen(buffer->input);
+                                             strcat(input_buffer," ");
+                                             len=strlen(input_buffer);
                                         }
                                          
                                      }else{
@@ -505,7 +438,7 @@ void parse_commands(){
 
                                               strncpy(current_word,matches[0],lcp_length);
                                               current_word[lcp_length]='\0';
-                                              len=strlen(buffer->input);
+                                              len=strlen(input_buffer);
                                               tab_count=0;
 
                                           }else{
@@ -523,7 +456,7 @@ void parse_commands(){
 
                                               strncpy(current_word,matches[0],lcp_length);
                                               current_word[lcp_length]='\0';
-                                              len=strlen(buffer->input);
+                                              len=strlen(input_buffer);
                                               tab_count=0;
 
                                     }else{
@@ -565,7 +498,7 @@ void parse_commands(){
                               free(comp);
                               free(completion_line);
 
-                              printf("\r\033[K$ %s",buffer->input);
+                              printf("\r\033[K$ %s",input_buffer);
                               fflush(stdout);
                               continue;
 
@@ -573,12 +506,10 @@ void parse_commands(){
                         }else{
                              auto_complete->search_in_current_dir=true;
                         }
-
-                  
-                   
+     
              }
 
-             i8 *current_word=(last_space==NULL)?buffer->input:last_space+1;
+             i8 *current_word=(last_space==NULL)?input_buffer:last_space+1;
 
              i8 *forwadslash=strrchr(current_word,'/');
 
@@ -594,18 +525,12 @@ void parse_commands(){
 
              i32 matches_count=autocomplete(current_word_copy,matches,auto_complete);
 
-               
-            
-      
             
              if(matches_count==0){
                   printf("\a");
                   continue;
              }else if(matches_count==1){
                   
-                  
-                 
-                   
                    if(matches[0]!=NULL){
 
                        if(auto_complete->search_in_current_dir){
@@ -635,19 +560,19 @@ void parse_commands(){
                               
                               
                        } else{
-                            strcpy(buffer->input,matches[0]);
+                            strcpy(input_buffer,matches[0]);
                        }
 
                        if(!auto_complete->directory_autocomplete){
 
-                           strcat(buffer->input," ");
+                           strcat(input_buffer," ");
                        }
                       
                    }
 
                    free(auto_complete);
 
-                  len=strlen(buffer->input);
+                  len=strlen(input_buffer);
                   tab_count=0;
              }else{
 
@@ -656,7 +581,7 @@ void parse_commands(){
                                 i32 current_word_len;
 
                                 if(last_space==NULL){
-                                     current_word_len=strlen(buffer->input);
+                                     current_word_len=strlen(input_buffer);
                                 }else{
                                      current_word_len=strlen(last_space+1);
                                 }
@@ -668,7 +593,7 @@ void parse_commands(){
 
                                strncpy(current_word,matches[0],lcp_length);
                                         current_word[lcp_length]='\0';
-                                        len=strlen(buffer->input);
+                                        len=strlen(input_buffer);
                                         tab_count=0;
                            }else{
                                  printf("\a");
@@ -678,15 +603,11 @@ void parse_commands(){
                           
                           
                       }else if(tab_count>=2){
-                               
 
                                 if(lcp_length>current_word_len){
-
-                                        
-                                        
                                         strncpy(current_word,matches[0],lcp_length);
                                         current_word[lcp_length]='\0';
-                                        len=strlen(buffer->input);
+                                        len=strlen(input_buffer);
                                         tab_count=0;
 
                          
@@ -727,21 +648,21 @@ void parse_commands(){
                        if(current_history_index>0){
                            current_history_index--;
                            
-                          free(buffer->input);
-                           buffer->input=strdup(hist[current_history_index]);
+                          free(input_buffer);
+                           input_buffer=strdup(hist[current_history_index]);
 
-                           len=strlen(buffer->input);
+                           len=strlen(input_buffer);
                            
                        }
                       
                  }else if(strcmp(sequence,"[B")==0){
-                       if(current_history_index<history_index-1){
+                       if(current_history_index<(*history_index)-1){
     
                          current_history_index++;
 
-                          free(buffer->input);
-                          buffer->input=strdup(hist[current_history_index]);
-                          len=strlen(buffer->input);
+                          free(input_buffer);
+                          input_buffer=strdup(hist[current_history_index]);
+                          len=strlen(input_buffer);
                          
                        }
                  }
@@ -749,34 +670,77 @@ void parse_commands(){
 
                   
                  
-             }else{
+             }else if (c == 127 || c == '\b') {
+                if (len > 0) {
+                    input_buffer[--len] = '\0';
+                    printf("\r\033[K$ %s", input_buffer);
+                    fflush(stdout);
+                }
+                continue;
+            }else{
 
                     tab_count=0;
-
-                    
                    if(len<MAX_BUFFER_SIZE-1){
 
-                       buffer->input[len++]=c;
-                       buffer->input[len]='\0';
+                       input_buffer[len++]=c;
+                       input_buffer[len]='\0';
+                        // write(STDOUT_FILENO, &c, 1); 
                    }
+
+                //    continue;
                    
              }
   
-              
-
-                    printf("\r\033[K$ %s",buffer->input);
+                    printf("\r\033[K$ %s",input_buffer);
                     fflush(stdout);
-                    
                 
-
-
         }
 
         disable_raw_mode(&original_termios);
-       
-       
+}
+
+
+void parse_commands(){
+
+     setbuf(stdout,NULL);
+     i8 *hist[256];
+     i32 history_index=0;
+
+     load_history_from_file_on_start_up(hist,&history_index);
+      
+    
+      while(true){
+
+         InputBuffer *buffer=malloc(sizeof(InputBuffer));
+         if(!buffer){
+             fprintf(stderr,"Failed to allocate memory for the input buffer (%s)\n",strerror(errno));
+             exit(EXIT_FAILURE);
+         }
    
-   
+         buffer->input=malloc(MAX_BUFFER_SIZE);
+         buffer->size=0;
+
+        //  i8 *cwd=getcwd(NULL,0);
+        //  i8 *home=getenv("HOME");
+        
+        reap_done_jobs_before_next_prompt();
+      
+        fflush(stdout);
+        fflush(stderr);
+        
+         printf("$ ");
+
+        //  if(cwd==NULL){
+        //     printf("$ ");
+        //  } else if(cwd && home && strstr(cwd,home)==cwd){
+        //      printf("~%s$ ",cwd+strlen(home));
+        //  } else{
+        //        printf("%s$ ",cwd);
+        //  }
+
+        buffer->input[0]='\0';
+       
+        raw_mode(buffer->input,hist,&history_index);
          buffer->size=strlen(buffer->input);
    
          if(buffer->size>0 && buffer->input[buffer->size-1]=='\n'){
@@ -794,13 +758,7 @@ void parse_commands(){
 
          bool background_job=false;
 
-
-        
-
-         
-
-         u32 args_size=parse_arguments(buffer->input,args,redirect,&background_job);
-
+        u32 args_size=parse_arguments(buffer->input,args,redirect,&background_job);
         hist[history_index++]=strdup(buffer->input);
 
          i8 *command=args[0];
