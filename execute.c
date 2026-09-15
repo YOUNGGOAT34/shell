@@ -18,6 +18,10 @@ void execute_program(i8 *command,i8 *args[],Redirect *redirect){
          }
    
           if(pid==0){
+
+            signal(SIGINT,  SIG_DFL);
+            signal(SIGTSTP, SIG_DFL);
+            signal(SIGQUIT, SIG_DFL);
                
               if(redirect->stdout_file!=NULL){
                         if(redirect->append){
@@ -116,6 +120,10 @@ void execute_program(i8 *command,i8 *args[],Redirect *redirect){
                }
    
                if(pid==0){ 
+
+                    signal(SIGINT,  SIG_DFL);
+                    signal(SIGTSTP, SIG_DFL);
+                    signal(SIGQUIT, SIG_DFL);
 
                      if(redirect->stdout_file!=NULL){
 
