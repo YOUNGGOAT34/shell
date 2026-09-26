@@ -83,10 +83,14 @@ static void expand_variable(i8 *current_arg) {
                      (i32)(dollar - current_arg),
                      current_arg, value, end + 1);
             strcpy(current_arg, temp);
+            free(value);
         }
     } else {
         i8 *value = expand_parameter(dollar + 1);
-        if (value) strcpy(dollar, value);
+        if (value) {
+            strcpy(dollar, value);
+            free(value);
+        }
     }
 }
 
